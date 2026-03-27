@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joren Janssens — Quality Engineering, AI & Innovation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #ad2c00;
+  --primary-container: #d83900;
+  --on-primary: #ffffff;
+  --surface: #fcf9f8;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f6f3f2;
+  --surface-container: #f0edec;
+  --surface-container-high: #ebe8e7;
+  --surface-container-highest: #e5e2e1;
+  --on-surface: #1c1b1b;
+  --on-surface-variant: #4f4948;
+  --outline-variant: #d8c2be;
+  --error: #ba1a1a;
+  --error-container: #ffdad6;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --shadow-ambient: 0px 24px 48px rgba(28, 27, 27, 0.06);
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--on-surface);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.nav-toggle {
+  width: 48px;
+  height: 48px;
+  background: rgba(246, 243, 242, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0;
+  position: relative;
+  z-index: 101;
+  transition: background 0.3s;
+}
+
+.nav-toggle:hover {
+  background: rgba(246, 243, 242, 0.95);
+}
+
+.nav-toggle .bar {
+  width: 18px;
+  height: 2px;
+  background: var(--on-surface);
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+nav.open .nav-toggle .bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+nav.open .nav-toggle .bar:nth-child(2) {
+  opacity: 0;
+}
+nav.open .nav-toggle .bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.nav-drawer {
+  background: rgba(246, 243, 242, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  padding: 0;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1), padding 0.4s;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+nav.open .nav-drawer {
+  max-height: 400px;
+  padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.nav-drawer a {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.5rem 0;
+  display: block;
+  transition: color 0.2s;
+}
+
+.nav-drawer a:hover {
+  color: var(--primary);
+}
+
+.nav-fixed-logo {
+  position: fixed;
+  top: 1.5rem;
+  left: 1.5rem;
+  z-index: 100;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  text-decoration: none;
+  background: rgba(246, 243, 242, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 0.75rem 1rem;
+  line-height: 1;
+}
+
+.nav-fixed-logo.on-dark {
+  color: var(--on-primary);
+  background: rgba(28, 27, 27, 0.5);
+}
+
+/* ── UTILITY ── */
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 3rem;
+}
+
+.section-label {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
+}
+
+.label-pixel {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  display: inline-block;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  display: flex;
+  align-items: stretch;
+}
+
+/* The full-width pixel grid — atlas billboard style
+   Each cell = 1/12 of viewport width, squared */
+.hero-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-rows: calc(100vw / 12);
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+  height: 100%;
+}
+
+.hero-grid .g { opacity: 0; }
+.hero-grid .g.primary { background: var(--primary-container); opacity: 0.80; }
+.hero-grid .g.primary-deep { background: var(--primary); opacity: 0.65; }
+.hero-grid .g.primary-light { background: var(--primary-container); opacity: 0.39; }
+.hero-grid .g.white { background: var(--surface); opacity: 0.80; }
+.hero-grid .g.ghost { background: var(--surface); opacity: 0.39; }
+
+/* Portrait — centered, covers the middle area */
+.hero-portrait-wrap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.hero-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  filter: grayscale(100%) contrast(1.05);
+}
+
+.portrait-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portrait-placeholder-inner {
+  text-align: center;
+}
+
+.portrait-initials {
+  font-family: var(--font-display);
+  font-size: 8rem;
+  font-weight: 700;
+  color: var(--surface-container-highest);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.portrait-hint {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--outline-variant);
+  margin-top: 1rem;
+}
+
+/* Text overlay — bottom left */
+.hero-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 5rem 3rem;
+  min-height: 100vh;
+}
+
+
+.hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 7vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--on-surface);
+  margin-bottom: 2rem;
+  background: rgba(252, 249, 248, 0.70);
+  display: inline;
+  padding: 0.1em 0.3em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.hero h1 .amp {
+  color: var(--primary-container);
+  font-style: italic;
+}
+
+.hero-sub {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--on-surface-variant);
+  max-width: 380px;
+  background: rgba(252, 249, 248, 0.70);
+  display: inline;
+  padding: 0.2em 0.3em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* Bottom-left branding tag */
+.hero-brand {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 3rem;
+  z-index: 10;
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--on-surface-variant);
+  opacity: 0.5;
+}
+
+/* Scroll indicator — right edge */
+.hero-scroll {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 3rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--on-surface-variant);
+  opacity: 0.4;
+  writing-mode: vertical-rl;
+}
+
+.hero-scroll .scroll-line {
+  width: 1px;
+  height: 32px;
+  background: var(--on-surface-variant);
+  opacity: 0.4;
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
+}
+
+/* ── EXPERTISE CARDS ── */
+.expertise {
+  background: var(--surface);
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.expertise-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: end;
+  margin-bottom: 5rem;
+}
+
+.expertise-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.expertise-intro {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--on-surface-variant);
+  max-width: 440px;
+}
+
+.expertise-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.exp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.exp-card-img {
+  aspect-ratio: 4 / 3;
+  background: #141313;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Terminal styling */
+.terminal {
+  width: 100%;
+  height: 100%;
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.625rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.5);
+  overflow: hidden;
+}
+
+.terminal-bar {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.terminal-dot {
+  width: 7px;
+  height: 7px;
+  background: rgba(255,255,255,0.15);
+}
+
+.terminal-title {
+  font-size: 0.5625rem;
+  color: rgba(255,255,255,0.25);
+  margin-left: 0.5rem;
+  letter-spacing: 0.03em;
+}
+
+.terminal-lines {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.terminal-lines::-webkit-scrollbar {
+  display: none;
+}
+
+.terminal .line {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.terminal .prompt {
+  color: var(--primary-container);
+}
+
+.terminal .success {
+  color: #4ade80;
+}
+
+.terminal .warn {
+  color: #fbbf24;
+}
+
+.terminal .info {
+  color: rgba(255,255,255,0.35);
+}
+
+.terminal .bright {
+  color: rgba(255,255,255,0.8);
+}
+
+/* Lines hidden until card is activated */
+.terminal .line {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* Once activated (via JS on hover), animate in */
+.exp-card.activated .terminal .line {
+  animation: termFadeIn 0.3s ease forwards;
+}
+
+.exp-card.activated .terminal .line:nth-child(1) { animation-delay: 0.2s; }
+.exp-card.activated .terminal .line:nth-child(2) { animation-delay: 0.6s; }
+.exp-card.activated .terminal .line:nth-child(3) { animation-delay: 1.0s; }
+.exp-card.activated .terminal .line:nth-child(4) { animation-delay: 1.4s; }
+.exp-card.activated .terminal .line:nth-child(5) { animation-delay: 1.8s; }
+.exp-card.activated .terminal .line:nth-child(6) { animation-delay: 2.2s; }
+.exp-card.activated .terminal .line:nth-child(7) { animation-delay: 2.6s; }
+.exp-card.activated .terminal .line:nth-child(8) { animation-delay: 3.0s; }
+.exp-card.activated .terminal .line:nth-child(9) { animation-delay: 3.4s; }
+.exp-card.activated .terminal .line:nth-child(10) { animation-delay: 3.8s; }
+.exp-card.activated .terminal .line:nth-child(11) { animation-delay: 4.2s; }
+.exp-card.activated .terminal .line:nth-child(12) { animation-delay: 4.6s; }
+
+@keyframes termFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.terminal .cursor {
+  display: inline-block;
+  width: 5px;
+  height: 0.75em;
+  background: var(--primary-container);
+  animation: blink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Mini report visual */
+.mini-report {
+  margin-top: 0.25rem;
+  white-space: normal;
+}
+
+.report-grid {
+  background: rgba(255,255,255,0.04);
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.5625rem;
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.125rem;
+}
+
+.report-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.report-row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr 2rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bar-track {
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: #4ade80;
+}
+
+.bar-fill.warn-fill {
+  background: #fbbf24;
+}
+
+.report-footer {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.5rem;
+}
+
+.exp-card-index {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-container);
+  opacity: 0.8;
+  line-height: 1;
+  z-index: 2;
+}
+
+.exp-card-body {
+  padding: 1.75rem 0 0 0;
+}
+
+.exp-card-category {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.exp-card-category .cat-pixel {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+}
+
+.exp-card-title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--on-surface);
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.exp-card-section-label {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+.exp-card-text {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--on-surface-variant);
+  margin-bottom: 1.25rem;
+}
+
+.exp-card-text:last-child {
+  margin-bottom: 0;
+}
+
+/* ── ABOUT ── */
+.about {
+  background: var(--surface-container-low);
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.about .section-inner {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 6rem;
+  align-items: start;
+}
+
+.about-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.hl {
+  color: var(--primary);
+}
+
+.about-right p {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+  color: var(--on-surface-variant);
+  margin-bottom: 1.25rem;
+}
+
+.about-right p:last-of-type {
+  margin-bottom: 0;
+}
+
+.about-tags {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin-top: 2rem;
+}
+
+.about-tag {
+  font-family: var(--font-display);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--primary);
+  background: transparent;
+  padding: 0.875rem 1rem;
+  display: flex;
+  align-items: center;
+  outline: 1px solid rgba(216, 194, 190, 0.3);
+  outline-offset: -1px;
+}
+
+.about-tag-empty {
+  color: transparent;
+}
+
+.about-tag.muted {
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.about-tags-note {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-style: italic;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+  margin-top: 0.75rem;
+}
+
+/* ── PHILOSOPHY ── */
+.philosophy {
+  background: var(--on-surface);
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.philosophy .section-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: start;
+}
+
+.philosophy-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 3.5rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--on-primary);
+  margin-bottom: 1.5rem;
+}
+
+.philosophy-sub {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.5);
+}
+
+.philosophy-tenets {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.tenet {
+  position: relative;
+  padding-left: 2.5rem;
+}
+
+.tenet-index {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--primary-container);
+}
+
+.tenet-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tenet-desc {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.45);
+}
+
+.philosophy-pixel {
+  position: absolute;
+  bottom: 3rem;
+  left: 3rem;
+  display: grid;
+  grid-template-columns: repeat(6, 12px);
+  grid-template-rows: repeat(6, 12px);
+  gap: 4px;
+  opacity: 0.08;
+}
+
+.philosophy-pixel .px {
+  width: 12px;
+  height: 12px;
+}
+
+.philosophy-pixel .px.filled { background: var(--primary-container); }
+.philosophy-pixel .px.muted { background: rgba(255,255,255,0.3); }
+
+/* ── INTERESTS ── */
+.interests {
+  background: var(--surface);
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.interests .section-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 4rem;
+}
+
+.interests-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: end;
+}
+
+.interests-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 4vw, 3.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.interests-sub {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.75;
+  color: var(--on-surface-variant);
+}
+
+.interest-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-auto-rows: 1fr;
+  gap: 0;
+}
+
+.interest-cell {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.interest-cell.accent-primary {
+  background: var(--primary);
+  opacity: 0.12;
+}
+
+.interest-cell.accent-muted {
+  background: var(--surface-container-low);
+}
+
+.interest-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: 0.5rem;
+}
+
+.interest-detail {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--on-surface-variant);
+}
+
+/* ── CONTACT ── */
+.contact {
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
+  padding: 7rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.contact .section-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: stretch;
+  position: relative;
+  z-index: 2;
+}
+
+.contact-text {
+  padding: 4rem 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.contact-heading {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  color: var(--on-primary);
+  margin-bottom: 1rem;
+}
+
+.contact-sub {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.6);
+}
+
+.contact-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.contact-link {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 2.5rem 1.5rem;
+  transition: opacity 0.2s;
+}
+
+.contact-link:first-child {
+  background: rgba(255,255,255,0.06);
+}
+
+.contact-link:last-child {
+  background: rgba(255,255,255,0.14);
+}
+
+.contact-link:hover {
+  opacity: 0.8;
+}
+
+.contact-link .link-label {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.4);
+}
+
+.contact-link .link-icon {
+  width: 6px;
+  height: 6px;
+  background: var(--on-primary);
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--on-surface);
+  padding: 2.5rem 0;
+}
+
+footer .section-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-left {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--surface-container-highest);
+  letter-spacing: -0.01em;
+}
+
+.footer-right {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: var(--on-surface-variant);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .hero-portrait-wrap {
+    width: 60%;
+  }
+  .expertise-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-inner {
+    padding: 0 1.5rem;
+  }
+  .hero-content {
+    padding: 4rem 1.5rem;
+  }
+  .hero-portrait-wrap {
+    width: 70%;
+  }
+  .hero-brand {
+    left: 1.5rem;
+    bottom: 1.5rem;
+  }
+  .hero-scroll {
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+  .nav-fixed-logo {
+    top: 1rem;
+    left: 1rem;
+  }
+  nav {
+    top: 1rem;
+    right: 1rem;
+  }
+  .expertise-header {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .expertise-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .about .section-inner,
+  .philosophy .section-inner {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .interests-header {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .interest-grid {
+    grid-template-columns: 1fr;
+  }
+  .interest-cell.accent-muted,
+  .interest-cell.accent-primary {
+    display: none;
+  }
+  .contact .section-inner {
+    grid-template-columns: 1fr;
+  }
+  .contact-text {
+    padding: 3rem 1.5rem;
+  }
+  .about-tags {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .about-tag-accent,
+  .about-tag-accent-light {
+    display: none;
+  }
+  footer .section-inner {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 2.75rem;
+  }
+  .hero-portrait-wrap {
+    width: 85%;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<a href="#" class="nav-fixed-logo">JJ</a>
+<nav id="mainNav">
+  <button class="nav-toggle" onclick="document.getElementById('mainNav').classList.toggle('open')" aria-label="Menu">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+  <div class="nav-drawer">
+    <a href="#expertise" onclick="document.getElementById('mainNav').classList.remove('open')">Expertise</a>
+    <a href="#about" onclick="document.getElementById('mainNav').classList.remove('open')">About</a>
+    <a href="#philosophy" onclick="document.getElementById('mainNav').classList.remove('open')">Philosophy</a>
+    <a href="#interests" onclick="document.getElementById('mainNav').classList.remove('open')">Interests</a>
+    <a href="#contact" onclick="document.getElementById('mainNav').classList.remove('open')">Contact</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <!-- Portrait behind the grid -->
+  <div class="hero-portrait-wrap">
+    <img src="portrait.jpeg" class="hero-portrait" alt="Joren Janssens">
+  </div>
+
+  <!-- Atlas-style geometric checkerboard overlay -->
+  <div class="hero-grid">
+    <!--        1     2     3     4     5     6     7     8     9    10    11    12  -->
+    <!-- row 1 --><div class="g"></div><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g"></div><div class="g primary"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+    <!-- row 2 --><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g white"></div><div class="g primary-light"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+    <!-- row 3 --><div class="g white"></div><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+    <!-- row 4 --><div class="g primary"></div><div class="g"></div><div class="g primary"></div><div class="g white"></div><div class="g primary"></div><div class="g primary-light"></div><div class="g ghost"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+    <!-- row 5 --><div class="g"></div><div class="g primary"></div><div class="g"></div><div class="g primary"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+    <!-- row 6 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div><div class="g primary-deep"></div><div class="g"></div><div class="g primary-light"></div>
+    <!-- row 7 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-deep"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div>
+    <!-- row 8 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div>
+    <!-- row 9  --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div><div class="g"></div>
+    <!-- row 10 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div><div class="g"></div>
+    <!-- row 11 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g primary-light"></div>
+    <!-- row 12 --><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div><div class="g"></div>
+  </div>
+
+  <!-- Text overlay -->
+  <div class="hero-content">
+    <h1>EXPERTISE<br><span class="amp">&</span> IMPACT</h1>
+    <p class="hero-sub">Quality engineering, data-driven decisions, and AI — building the teams and systems that turn complexity into clarity and confidence.</p>
+  </div>
+
+  <div class="hero-scroll"><div class="scroll-line"></div>Scroll</div>
+</section>
+
+<!-- EXPERTISE -->
+<section class="expertise" id="expertise">
+  <div class="section-inner">
+    <div class="expertise-header">
+      <div>
+        <div class="section-label"><span class="label-pixel"></span> Core Expertise</div>
+        <h2 class="expertise-heading">Where quality, data, and AI converge</h2>
+      </div>
+      <p class="expertise-intro">Driving measurable impact through structured quality engineering, early AI adoption, and the right tooling to keep teams moving fast without breaking things.</p>
+    </div>
+
+    <div class="expertise-grid">
+
+      <div class="exp-card">
+        <div class="exp-card-img">
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+              <span class="terminal-title">playwright</span>
+            </div>
+            <div class="terminal-lines">
+              <div class="line"><span class="prompt">$</span> npx playwright test --project=chromium</div>
+              <div class="line"><span class="info">Running 48 tests using 4 workers</span></div>
+              <div class="line"><span class="success">  ✓</span> login.spec.ts — authenticates user <span class="info">(1.2s)</span></div>
+              <div class="line"><span class="success">  ✓</span> dashboard.spec.ts — loads metrics <span class="info">(0.8s)</span></div>
+              <div class="line"><span class="success">  ✓</span> api/orders.spec.ts — validates schema <span class="info">(0.3s)</span></div>
+              <div class="line"><span class="warn">  ◌</span> checkout.spec.ts — retry 1/3 <span class="info">(2.1s)</span></div>
+              <div class="line"><span class="success">  ✓</span> checkout.spec.ts — completes flow <span class="info">(1.9s)</span></div>
+              <div class="line"><span class="success">  ✓</span> reports/export.spec.ts — downloads PDF <span class="info">(0.6s)</span></div>
+              <div class="line"><br></div>
+              <div class="line"><span class="bright">  48 passed</span> <span class="info">(34s)</span></div>
+              <div class="line"><br></div>
+              <div class="line mini-report">
+                <div class="report-grid">
+                  <div class="report-header">
+                    <span class="bright">Coverage</span>
+                    <span class="success">94.2%</span>
+                  </div>
+                  <div class="report-bars">
+                    <div class="report-row"><span class="info">auth</span><div class="bar-track"><div class="bar-fill" style="width:98%"></div></div><span class="bright">98%</span></div>
+                    <div class="report-row"><span class="info">orders</span><div class="bar-track"><div class="bar-fill" style="width:91%"></div></div><span class="bright">91%</span></div>
+                    <div class="report-row"><span class="info">checkout</span><div class="bar-track"><div class="bar-fill warn-fill" style="width:87%"></div></div><span class="warn">87%</span></div>
+                    <div class="report-row"><span class="info">reports</span><div class="bar-track"><div class="bar-fill" style="width:96%"></div></div><span class="bright">96%</span></div>
+                  </div>
+                  <div class="report-footer">
+                    <span class="success">■</span><span class="info"> 48 pass</span>
+                    <span class="warn">■</span><span class="info"> 1 retry</span>
+                    <span class="info">■ 0 fail</span>
+                  </div>
+                </div>
+                <span class="cursor"></span>
+              </div>
+            </div>
+          </div>
+          <div class="exp-card-index">01</div>
+        </div>
+        <div class="exp-card-body">
+          <div class="exp-card-category"><span class="cat-pixel"></span> Test Strategy & Management</div>
+          <div class="exp-card-title">Quality Engineering</div>
+          <div class="exp-card-section-label">Approach</div>
+          <div class="exp-card-text">Designing end-to-end test strategies that scale with the product. From risk-based test planning to automation architecture, building quality in rather than inspecting it after the fact.</div>
+          <div class="exp-card-section-label">Impact</div>
+          <div class="exp-card-text">Reduced regression cycles from days to hours by restructuring test suites around business-critical paths, implementing smart parallelization, and establishing clear quality gates across CI/CD pipelines.</div>
+        </div>
+      </div>
+
+      <div class="exp-card">
+        <div class="exp-card-img">
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+              <span class="terminal-title">ai-agent</span>
+            </div>
+            <div class="terminal-lines">
+              <div class="line"><span class="prompt">$</span> claude --agent review-defects</div>
+              <div class="line"><span class="info">◈ Loading defect corpus (2,847 tickets)...</span></div>
+              <div class="line"><span class="info">◈ Clustering with embedding model...</span></div>
+              <div class="line"><span class="bright">  Found 12 clusters across 3 modules</span></div>
+              <div class="line"><span class="warn">  ⚡</span> Cluster #4: auth-timeout — <span class="bright">38 defects</span></div>
+              <div class="line"><span class="info">  Generating root-cause summary...</span></div>
+              <div class="line"><span class="success">  ✓</span> Report written to /out/analysis.md</div>
+              <div class="line"><span class="success">  ✓</span> Jira tickets auto-linked <span class="info">(12 stories)</span></div>
+              <div class="line"><br></div>
+              <div class="line"><span class="bright">  Done</span> <span class="info">— 3 actionable recommendations</span><span class="cursor"></span></div>
+            </div>
+          </div>
+          <div class="exp-card-index">02</div>
+        </div>
+        <div class="exp-card-body">
+          <div class="exp-card-category"><span class="cat-pixel"></span> Early Adoption & Integration</div>
+          <div class="exp-card-title">AI Innovation</div>
+          <div class="exp-card-section-label">Approach</div>
+          <div class="exp-card-text">Identifying where AI creates real leverage, not hype. Integrating LLMs, code assistants, and intelligent automation into existing workflows to amplify team output without introducing new complexity.</div>
+          <div class="exp-card-section-label">Impact</div>
+          <div class="exp-card-text">Pioneered AI-assisted test generation and review processes, built evaluation frameworks for LLM-powered tools, and introduced generative AI into documentation and knowledge management workflows across teams.</div>
+        </div>
+      </div>
+
+      <div class="exp-card">
+        <div class="exp-card-img">
+          <div class="terminal">
+            <div class="terminal-bar">
+              <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
+              <span class="terminal-title">ci/cd pipeline</span>
+            </div>
+            <div class="terminal-lines">
+              <div class="line"><span class="prompt">$</span> gh workflow run deploy.yml --ref main</div>
+              <div class="line"><span class="info">◈ Triggered: build → test → stage → prod</span></div>
+              <div class="line"><span class="success">  ✓</span> build <span class="info">— docker image pushed (42s)</span></div>
+              <div class="line"><span class="success">  ✓</span> lint + unit tests <span class="info">— 312 passed (28s)</span></div>
+              <div class="line"><span class="success">  ✓</span> integration tests <span class="info">— 67 passed (1m14s)</span></div>
+              <div class="line"><span class="success">  ✓</span> quality gate <span class="info">— coverage 94.2%</span></div>
+              <div class="line"><span class="success">  ✓</span> deploy staging <span class="info">— health check OK</span></div>
+              <div class="line"><span class="warn">  ⏳</span> awaiting approval for prod...</div>
+              <div class="line"><br></div>
+              <div class="line"><span class="bright">  Pipeline healthy</span> <span class="info">(2m41s)</span><span class="cursor"></span></div>
+            </div>
+          </div>
+          <div class="exp-card-index">03</div>
+        </div>
+        <div class="exp-card-body">
+          <div class="exp-card-category"><span class="cat-pixel"></span> Developer & Team Productivity</div>
+          <div class="exp-card-title">Project Tooling</div>
+          <div class="exp-card-section-label">Approach</div>
+          <div class="exp-card-text">Building and selecting the toolchain that removes friction from delivery. Connecting test management, reporting, CI/CD, and collaboration tools into a coherent system that teams actually use.</div>
+          <div class="exp-card-section-label">Impact</div>
+          <div class="exp-card-text">Implemented integrated tooling ecosystems that unified test reporting, defect tracking, and deployment visibility, giving stakeholders real-time quality metrics and cutting decision latency across release cycles.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="section-inner">
+    <div>
+      <div class="section-label"><span class="label-pixel"></span> About</div>
+      <h2 class="about-heading">Pragmatist, <span class="hl">builder</span>, eternal <span class="hl">experimentalist</span></h2>
+      <div class="about-tags">
+        <span class="about-tag">Test Management</span>
+        <span class="about-tag">Quality Engineering</span>
+        <span class="about-tag about-tag-empty"></span>
+        <span class="about-tag">AI Integration</span>
+        <span class="about-tag about-tag-empty"></span>
+        <span class="about-tag muted">Test Automation</span>
+        <span class="about-tag muted">ERP Testing</span>
+        <span class="about-tag">Project Tooling</span>
+        <span class="about-tag muted">Performance Testing</span>
+        <span class="about-tag about-tag-empty"></span>
+        <span class="about-tag muted">Data Migration</span>
+        <span class="about-tag about-tag-empty"></span>
+      </div>
+      <p class="about-tags-note">An incomplete grid offers a chance to continue growing.</p>
+    </div>
+    <div class="about-right">
+      <p>I'm Joren — a software quality professional with close to <span class="hl">15 years of experience</span> across industries and technologies. Pragmatic, team-oriented, and driven by a belief in <span class="hl">continuous iterative improvement</span>. I love acquiring new skills and finding ways to put them to work, both professionally and personally.</p>
+      <p>My story starts long before my career did. As a kid I was always drawing plans and building things — convinced I'd become an architect. Then I discovered computers (read: computer games), taught myself to program, and never looked back. From that moment on, my future was in IT. That includes being the <span class="hl">family helpdesk</span>, obviously.</p>
+      <p>Since entering the quality engineering domain I've managed test implementations across <span class="hl">ERP systems</span>, <span class="hl">embedded software</span>, <span class="hl">web and mobile platforms</span>, <span class="hl">APIs</span>, <span class="hl">databases</span>, and more. I've delivered manual testing, test automation, performance testing, reporting, tool implementations, crowd testing, test assessments, and data migration testing — always <span class="hl">adapting the approach to the context</span> rather than applying a one-size-fits-all framework.</p>
+      <p>Today my focus has shifted to the frontier of <span class="hl">AI in the workplace</span>. I'm actively implementing AI-powered solutions that deliver <span class="hl">immediate, tangible business results</span> — from <span class="hl">bug clustering</span> and <span class="hl">AI-driven automation</span> to <span class="hl">LLM-driven reporting</span> and <span class="hl">automated knowledge extraction</span>. Not experiments for the sake of experimenting, but real tools in real workflows that measurably reduce cycle time, cut costs, and raise quality. I believe AI adoption should be driven by <span class="hl">outcomes, not hype</span>, and I bring that mindset to every team I work with.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy" id="philosophy">
+  <!-- Decorative pixel field -->
+  <div class="philosophy-pixel">
+    <div class="px filled"></div><div class="px"></div><div class="px muted"></div><div class="px"></div><div class="px filled"></div><div class="px"></div>
+    <div class="px"></div><div class="px muted"></div><div class="px"></div><div class="px filled"></div><div class="px"></div><div class="px muted"></div>
+    <div class="px muted"></div><div class="px"></div><div class="px filled"></div><div class="px"></div><div class="px muted"></div><div class="px"></div>
+    <div class="px"></div><div class="px filled"></div><div class="px"></div><div class="px muted"></div><div class="px"></div><div class="px filled"></div>
+    <div class="px filled"></div><div class="px"></div><div class="px muted"></div><div class="px"></div><div class="px filled"></div><div class="px"></div>
+    <div class="px"></div><div class="px muted"></div><div class="px filled"></div><div class="px"></div><div class="px"></div><div class="px muted"></div>
+  </div>
+  <div class="section-inner">
+    <div>
+      <div class="section-label" style="color: rgba(255,255,255,0.3);"><span class="label-pixel"></span> Philosophy</div>
+      <h2 class="philosophy-heading">How I think about the work</h2>
+      <p class="philosophy-sub">A set of principles that guide every project, from test strategy to tooling decisions.</p>
+    </div>
+    <div class="philosophy-tenets">
+      <div class="tenet">
+        <div class="tenet-index">01</div>
+        <div class="tenet-title">Quality is a design decision</div>
+        <div class="tenet-desc">Quality cannot be tested in after the fact. It is built in through architecture, process, and culture. The earlier you invest, the cheaper and more effective it is.</div>
+      </div>
+      <div class="tenet">
+        <div class="tenet-index">02</div>
+        <div class="tenet-title">Automate the judgment, not just the clicks</div>
+        <div class="tenet-desc">Real test automation is not about replaying scripts. It is about encoding expertise into systems that make intelligent decisions about risk, coverage, and priority.</div>
+      </div>
+      <div class="tenet">
+        <div class="tenet-index">03</div>
+        <div class="tenet-title">AI is a tool, not a strategy</div>
+        <div class="tenet-desc">AI amplifies what is already working. Adopt it where it creates genuine leverage, but never let it replace clear thinking about what you are trying to achieve.</div>
+      </div>
+      <div class="tenet">
+        <div class="tenet-index">04</div>
+        <div class="tenet-title">Tooling should disappear</div>
+        <div class="tenet-desc">The best toolchain is the one nobody talks about because it just works. Reduce friction, unify visibility, and let people focus on the product instead of the process.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERESTS -->
+<section class="interests" id="interests">
+  <div class="section-inner">
+    <div class="interests-header">
+      <div>
+        <div class="section-label"><span class="label-pixel"></span> Interests</div>
+        <h2 class="interests-heading">Beyond the build</h2>
+      </div>
+      <p class="interests-sub">Curiosity does not respect domain boundaries. The things I care about outside of work sharpen how I think inside of it.</p>
+    </div>
+    <div class="interest-grid">
+      <div class="interest-cell">
+        <div class="interest-name">AI & Emerging Technology</div>
+        <div class="interest-detail">Constantly experimenting with new AI models, spatial computing, automation tools, and developer productivity platforms. First to try, first to share what actually works.</div>
+      </div>
+      <div class="interest-cell accent-muted"></div>
+      <div class="interest-cell">
+        <div class="interest-name">Knowledge Sharing</div>
+        <div class="interest-detail">Mentoring testers and engineers, running internal workshops on AI adoption, and writing about the intersection of quality and technology.</div>
+      </div>
+      <div class="interest-cell accent-primary"></div>
+      <div class="interest-cell">
+        <div class="interest-name">Process & Systems Thinking</div>
+        <div class="interest-detail">Fascinated by how teams organize, communicate, and deliver. Drawing from lean, agile, and systems theory to find the simplest path to reliable outcomes.</div>
+      </div>
+      <div class="interest-cell accent-muted"></div>
+      <div class="interest-cell accent-muted"></div>
+      <div class="interest-cell accent-primary"></div>
+      <div class="interest-cell">
+        <div class="interest-name">Family & Social Life</div>
+        <div class="interest-detail">At the end of the day, the people around you are what matter most. I recharge through quality time with family and friends — good conversations, shared meals, and the kind of downtime that puts everything else in perspective.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="section-inner">
+    <div class="contact-text">
+      <h2 class="contact-heading">Let's build something together</h2>
+      <p class="contact-sub">Whether it's a quality engineering challenge, an AI integration opportunity, or a conversation about better tooling.</p>
+    </div>
+    <div class="contact-cards">
+      <a href="mailto:joren.janssens@biq.be" class="contact-link">
+        <div class="link-icon"></div>
+        <span>Email</span>
+        <span class="link-label">joren.janssens@biq.be</span>
+      </a>
+      <a href="https://linkedin.com/in/jorenjanssens" class="contact-link">
+        <div class="link-icon"></div>
+        <span>LinkedIn</span>
+        <span class="link-label">jorenjanssens</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="section-inner">
+    <div class="footer-left">Joren Janssens</div>
+    <div class="footer-right">2026</div>
+  </div>
+</footer>
+
+<script>
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[rand(0, arr.length - 1)]; }
+function dec(n) { return (n / 10).toFixed(1); }
+
+function randomizeTerminal(card) {
+  var lines = card.querySelectorAll('.terminal-lines .line');
+  var title = card.querySelector('.terminal-title');
+  if (!title) return;
+  var t = title.textContent.trim();
+
+  if (t === 'playwright') {
+    var total = rand(32, 72);
+    var workers = rand(3, 8);
+    var times = [dec(rand(3,18)), dec(rand(4,14)), dec(rand(2,6)), dec(rand(15,31)), dec(rand(8,24)), dec(rand(3,9))];
+    var dur = rand(22, 58);
+    var cov = (rand(880,980)/10).toFixed(1);
+    var bars = [rand(88,99), rand(84,97), rand(78,93), rand(90,99)];
+    lines[1].innerHTML = '<span class="info">Running ' + total + ' tests using ' + workers + ' workers</span>';
+    lines[2].innerHTML = '<span class="success">  ✓</span> login.spec.ts — authenticates user <span class="info">(' + times[0] + 's)</span>';
+    lines[3].innerHTML = '<span class="success">  ✓</span> dashboard.spec.ts — loads metrics <span class="info">(' + times[1] + 's)</span>';
+    lines[4].innerHTML = '<span class="success">  ✓</span> api/orders.spec.ts — validates schema <span class="info">(' + times[2] + 's)</span>';
+    lines[5].innerHTML = '<span class="warn">  ◌</span> checkout.spec.ts — retry 1/' + rand(2,3) + ' <span class="info">(' + times[3] + 's)</span>';
+    lines[6].innerHTML = '<span class="success">  ✓</span> checkout.spec.ts — completes flow <span class="info">(' + times[4] + 's)</span>';
+    lines[7].innerHTML = '<span class="success">  ✓</span> reports/export.spec.ts — downloads PDF <span class="info">(' + times[5] + 's)</span>';
+    lines[9].innerHTML = '<span class="bright">  ' + total + ' passed</span> <span class="info">(' + dur + 's)</span>';
+    var report = lines[11];
+    if (report) {
+      report.querySelector('.report-header .success').textContent = cov + '%';
+      var rows = report.querySelectorAll('.report-row');
+      rows.forEach(function(row, i) {
+        var fill = row.querySelector('.bar-fill');
+        var val = bars[i];
+        fill.style.width = val + '%';
+        row.querySelector('span:last-child').textContent = val + '%';
+      });
+      var footer = report.querySelector('.report-footer');
+      footer.innerHTML = '<span class="success">■</span><span class="info"> ' + total + ' pass</span><span class="warn">■</span><span class="info"> ' + rand(0,3) + ' retry</span><span class="info">■ 0 fail</span>';
+    }
+  }
+
+  if (t === 'ai-agent') {
+    var tickets = rand(800, 4200);
+    var clusters = rand(4, 14);
+    var modules = rand(2, 5);
+    var topCluster = rand(1, clusters);
+    var topName = pick(['auth-timeout', 'null-ref-cart', 'race-condition', 'stale-cache', 'rate-limiter', 'session-drift']);
+    var defects = rand(12, 64);
+    var stories = rand(4, 18);
+    var recs = rand(2, 7);
+    lines[1].innerHTML = '<span class="info">◈ Loading defect corpus (' + tickets.toLocaleString() + ' tickets)...</span>';
+    lines[3].innerHTML = '<span class="bright">  Found ' + clusters + ' clusters across ' + modules + ' modules</span>';
+    lines[4].innerHTML = '<span class="warn">  ⚡</span> Cluster #' + topCluster + ': ' + topName + ' — <span class="bright">' + defects + ' defects</span>';
+    lines[7].innerHTML = '<span class="success">  ✓</span> Jira tickets auto-linked <span class="info">(' + stories + ' stories)</span>';
+    lines[9].innerHTML = '<span class="bright">  Done</span> <span class="info">— ' + recs + ' actionable recommendations</span><span class="cursor"></span>';
+  }
+
+  if (t === 'ci/cd pipeline') {
+    var units = rand(180, 520);
+    var integ = rand(34, 120);
+    var cov2 = (rand(860,990)/10).toFixed(1);
+    var buildT = rand(24, 68);
+    var unitT = rand(16, 45);
+    var integM = rand(1, 2);
+    var integS = rand(4, 58);
+    var totalT = rand(120, 340);
+    var m = Math.floor(totalT / 60);
+    var s = totalT % 60;
+    lines[2].innerHTML = '<span class="success">  ✓</span> build <span class="info">— docker image pushed (' + buildT + 's)</span>';
+    lines[3].innerHTML = '<span class="success">  ✓</span> lint + unit tests <span class="info">— ' + units + ' passed (' + unitT + 's)</span>';
+    lines[4].innerHTML = '<span class="success">  ✓</span> integration tests <span class="info">— ' + integ + ' passed (' + integM + 'm' + (integS < 10 ? '0' : '') + integS + 's)</span>';
+    lines[5].innerHTML = '<span class="success">  ✓</span> quality gate <span class="info">— coverage ' + cov2 + '%</span>';
+    lines[9].innerHTML = '<span class="bright">  Pipeline healthy</span> <span class="info">(' + m + 'm' + (s < 10 ? '0' : '') + s + 's)</span><span class="cursor"></span>';
+  }
+}
+
+document.querySelectorAll('.exp-card').forEach(function(card) {
+  card.addEventListener('mouseenter', function() {
+    if (!card.classList.contains('activated')) {
+      randomizeTerminal(card);
+      card.classList.add('activated');
+      var tl = card.querySelector('.terminal-lines');
+      if (tl) {
+        var totalLines = tl.querySelectorAll('.line').length;
+        var scrollDelay = (totalLines * 400) + 200;
+        setTimeout(function() {
+          tl.scrollTo({ top: tl.scrollHeight, behavior: 'smooth' });
+        }, scrollDelay);
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
