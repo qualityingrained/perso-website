@@ -1074,9 +1074,17 @@ footer .section-inner {
   .about-tags {
     grid-template-columns: repeat(2, 1fr);
   }
-  .about-tag-accent,
-  .about-tag-accent-light {
+  .about-tag.about-tag-empty {
     display: none;
+  }
+  .contact-cards {
+    grid-template-columns: 1fr;
+  }
+  .philosophy .section-inner {
+    gap: 2rem;
+  }
+  .terminal {
+    font-size: 0.5625rem;
   }
   footer .section-inner {
     flex-direction: column;
@@ -1087,10 +1095,35 @@ footer .section-inner {
 
 @media (max-width: 480px) {
   .hero h1 {
-    font-size: 2.75rem;
+    font-size: 2.25rem;
+  }
+  .hero-sub {
+    font-size: 0.8125rem;
   }
   .hero-portrait-wrap {
     width: 85%;
+  }
+  .about-tags {
+    grid-template-columns: 1fr 1fr;
+  }
+  .expertise-heading,
+  .about-heading,
+  .philosophy-heading,
+  .interests-heading {
+    font-size: 1.75rem;
+  }
+  .contact-heading {
+    font-size: 1.5rem;
+  }
+  .contact-text {
+    padding: 2.5rem 1.5rem;
+  }
+  .terminal {
+    font-size: 0.5rem;
+    padding: 0.75rem;
+  }
+  .exp-card-title {
+    font-size: 1.125rem;
   }
 }
 </style>
@@ -1496,22 +1529,40 @@ function randomizeTerminal(card) {
   }
 }
 
-document.querySelectorAll('.exp-card').forEach(function(card) {
-  card.addEventListener('mouseenter', function() {
-    if (!card.classList.contains('activated')) {
-      randomizeTerminal(card);
-      card.classList.add('activated');
-      var tl = card.querySelector('.terminal-lines');
-      if (tl) {
-        var totalLines = tl.querySelectorAll('.line').length;
-        var scrollDelay = (totalLines * 400) + 200;
-        setTimeout(function() {
-          tl.scrollTo({ top: tl.scrollHeight, behavior: 'smooth' });
-        }, scrollDelay);
-      }
+function activateCard(card) {
+  if (!card.classList.contains('activated')) {
+    randomizeTerminal(card);
+    card.classList.add('activated');
+    var tl = card.querySelector('.terminal-lines');
+    if (tl) {
+      var totalLines = tl.querySelectorAll('.line').length;
+      var scrollDelay = (totalLines * 400) + 200;
+      setTimeout(function() {
+        tl.scrollTo({ top: tl.scrollHeight, behavior: 'smooth' });
+      }, scrollDelay);
     }
-  });
+  }
+}
+
+document.querySelectorAll('.exp-card').forEach(function(card) {
+  card.addEventListener('mouseenter', function() { activateCard(card); });
+  card.addEventListener('touchstart', function() { activateCard(card); }, { passive: true });
 });
+
+/* Activate terminals when they scroll into view on mobile */
+if ('IntersectionObserver' in window) {
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        activateCard(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.exp-card').forEach(function(card) {
+    observer.observe(card);
+  });
+}
 </script>
 </body>
 </html>
