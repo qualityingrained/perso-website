@@ -361,7 +361,7 @@ nav.open .nav-drawer {
 
 /* ── EXPERTISE CARDS ── */
 .expertise {
-  background: var(--surface);
+  background: linear-gradient(135deg, var(--primary), var(--primary-container));
   padding: 7rem 0;
   position: relative;
   overflow: hidden;
@@ -381,13 +381,18 @@ nav.open .nav-drawer {
   font-weight: 700;
   letter-spacing: -0.025em;
   line-height: 1.05;
+  color: var(--on-primary);
+}
+
+.expertise .section-label {
+  color: rgba(255,255,255,0.45);
 }
 
 .expertise-intro {
   font-family: var(--font-body);
   font-size: 0.9375rem;
   line-height: 1.75;
-  color: var(--on-surface-variant);
+  color: rgba(255,255,255,0.65);
   max-width: 440px;
 }
 
@@ -522,6 +527,301 @@ nav.open .nav-drawer {
   50% { opacity: 0; }
 }
 
+/* ── DEFECT CLUSTER VIZ ── */
+.cluster-viz {
+  width: 100%;
+  height: 100%;
+  background: #141313;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+.cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.cluster-title {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+}
+
+.cluster-count {
+  font-size: 0.5625rem;
+  color: rgba(255,255,255,0.5);
+}
+
+.cluster-canvas {
+  flex: 1;
+  position: relative;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 20% 25%;
+  overflow: hidden;
+}
+
+.cluster-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  opacity: 0;
+  transform: scale(0);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  cursor: pointer;
+}
+
+.cluster-dot.visible {
+  opacity: 0.85;
+  transform: scale(1);
+}
+
+.cluster-dot:hover {
+  opacity: 1;
+  transform: scale(1.6);
+  z-index: 10;
+}
+
+.cluster-dot.size-sm { width: 6px; height: 6px; }
+.cluster-dot.size-md { width: 9px; height: 9px; }
+.cluster-dot.size-lg { width: 12px; height: 12px; }
+
+.cluster-legend {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.cluster-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cluster-legend-item:hover {
+  opacity: 0.7;
+}
+
+.cluster-legend-item .legend-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.cluster-tooltip {
+  display: none;
+  position: absolute;
+  background: rgba(20,19,19,0.95);
+  padding: 0.5rem 0.625rem;
+  font-size: 0.5625rem;
+  color: rgba(255,255,255,0.7);
+  pointer-events: none;
+  z-index: 20;
+  max-width: 160px;
+  line-height: 1.5;
+}
+
+.cluster-tooltip.show {
+  display: block;
+}
+
+.cluster-tooltip strong {
+  color: rgba(255,255,255,0.9);
+  display: block;
+  margin-bottom: 0.125rem;
+}
+
+/* ── PIPELINE VIZ ── */
+.pipeline-viz {
+  width: 100%;
+  height: 100%;
+  background: #141313;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+.pipeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.pipeline-title {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.3);
+}
+
+.pipeline-run {
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.pipeline-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.pipeline-stages {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  justify-content: center;
+}
+
+.pipeline-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.4rem;
+  position: relative;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.pipeline-stage.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.stage-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.3);
+  transition: background 0.3s, color 0.3s;
+}
+
+.pipeline-stage.done .stage-icon {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.pipeline-stage.running .stage-icon {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  animation: pulseBg 1.2s ease-in-out infinite;
+}
+
+.pipeline-stage.waiting .stage-icon {
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.15);
+}
+
+.pipeline-stage.approved .stage-icon {
+  background: rgba(96, 165, 250, 0.15);
+  color: #60a5fa;
+}
+
+@keyframes pulseBg {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.stage-label {
+  font-size: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+}
+
+.pipeline-stage.done .stage-label { color: rgba(74, 222, 128, 0.7); }
+.pipeline-stage.running .stage-label { color: rgba(251, 191, 36, 0.7); }
+
+.stage-time {
+  font-size: 0.4375rem;
+  color: rgba(255,255,255,0.2);
+  min-height: 0.75em;
+}
+
+.pipeline-connector {
+  width: 20px;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.pipeline-connector .connector-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0;
+  background: #4ade80;
+  transition: width 0.4s ease;
+}
+
+.pipeline-connector.filled .connector-fill {
+  width: 100%;
+}
+
+.pipeline-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  max-height: 3.5rem;
+  overflow: hidden;
+}
+
+.pipeline-job {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.5rem;
+  color: rgba(255,255,255,0.35);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.pipeline-job.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pipeline-job .job-status {
+  width: 4px;
+  height: 4px;
+  background: #4ade80;
+}
+
+.pipeline-job .job-status.warn { background: #fbbf24; }
+.pipeline-job .job-status.info { background: rgba(255,255,255,0.2); }
+
+.pipeline-job .job-name { color: rgba(255,255,255,0.5); }
+.pipeline-job .job-detail { color: rgba(255,255,255,0.2); }
+
 /* Mini report visual */
 .mini-report {
   margin-top: 0.25rem;
@@ -586,8 +886,7 @@ nav.open .nav-drawer {
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
-  color: var(--primary-container);
-  opacity: 0.8;
+  color: rgba(255,255,255,0.4);
   line-height: 1;
   z-index: 2;
 }
@@ -602,7 +901,7 @@ nav.open .nav-drawer {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--on-surface-variant);
+  color: rgba(255,255,255,0.5);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -612,7 +911,7 @@ nav.open .nav-drawer {
 .exp-card-category .cat-pixel {
   width: 6px;
   height: 6px;
-  background: var(--primary);
+  background: var(--on-primary);
 }
 
 .exp-card-title {
@@ -621,7 +920,7 @@ nav.open .nav-drawer {
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.15;
-  color: var(--on-surface);
+  color: var(--on-primary);
   text-transform: uppercase;
   margin-bottom: 1.25rem;
 }
@@ -632,7 +931,7 @@ nav.open .nav-drawer {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--primary);
+  color: rgba(255,255,255,0.8);
   margin-bottom: 0.5rem;
 }
 
@@ -640,7 +939,7 @@ nav.open .nav-drawer {
   font-family: var(--font-body);
   font-size: 0.8125rem;
   line-height: 1.65;
-  color: var(--on-surface-variant);
+  color: rgba(255,255,255,0.6);
   margin-bottom: 1.25rem;
 }
 
@@ -1193,46 +1492,16 @@ footer .section-inner {
 
     <div class="expertise-grid">
 
-      <div class="exp-card">
+      <div class="exp-card" data-viz="cluster">
         <div class="exp-card-img">
-          <div class="terminal">
-            <div class="terminal-bar">
-              <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
-              <span class="terminal-title">playwright</span>
+          <div class="cluster-viz">
+            <div class="cluster-header">
+              <span class="cluster-title">Defect Clustering</span>
+              <span class="cluster-count"></span>
             </div>
-            <div class="terminal-lines">
-              <div class="line"><span class="prompt">$</span> npx playwright test --project=chromium</div>
-              <div class="line"><span class="info">Running 48 tests using 4 workers</span></div>
-              <div class="line"><span class="success">  ✓</span> login.spec.ts — authenticates user <span class="info">(1.2s)</span></div>
-              <div class="line"><span class="success">  ✓</span> dashboard.spec.ts — loads metrics <span class="info">(0.8s)</span></div>
-              <div class="line"><span class="success">  ✓</span> api/orders.spec.ts — validates schema <span class="info">(0.3s)</span></div>
-              <div class="line"><span class="warn">  ◌</span> checkout.spec.ts — retry 1/3 <span class="info">(2.1s)</span></div>
-              <div class="line"><span class="success">  ✓</span> checkout.spec.ts — completes flow <span class="info">(1.9s)</span></div>
-              <div class="line"><span class="success">  ✓</span> reports/export.spec.ts — downloads PDF <span class="info">(0.6s)</span></div>
-              <div class="line"><br></div>
-              <div class="line"><span class="bright">  48 passed</span> <span class="info">(34s)</span></div>
-              <div class="line"><br></div>
-              <div class="line mini-report">
-                <div class="report-grid">
-                  <div class="report-header">
-                    <span class="bright">Coverage</span>
-                    <span class="success">94.2%</span>
-                  </div>
-                  <div class="report-bars">
-                    <div class="report-row"><span class="info">auth</span><div class="bar-track"><div class="bar-fill" style="width:98%"></div></div><span class="bright">98%</span></div>
-                    <div class="report-row"><span class="info">orders</span><div class="bar-track"><div class="bar-fill" style="width:91%"></div></div><span class="bright">91%</span></div>
-                    <div class="report-row"><span class="info">checkout</span><div class="bar-track"><div class="bar-fill warn-fill" style="width:87%"></div></div><span class="warn">87%</span></div>
-                    <div class="report-row"><span class="info">reports</span><div class="bar-track"><div class="bar-fill" style="width:96%"></div></div><span class="bright">96%</span></div>
-                  </div>
-                  <div class="report-footer">
-                    <span class="success">■</span><span class="info"> 48 pass</span>
-                    <span class="warn">■</span><span class="info"> 1 retry</span>
-                    <span class="info">■ 0 fail</span>
-                  </div>
-                </div>
-                <span class="cursor"></span>
-              </div>
-            </div>
+            <div class="cluster-canvas" id="clusterCanvas"></div>
+            <div class="cluster-legend" id="clusterLegend"></div>
+            <div class="cluster-tooltip" id="clusterTooltip"></div>
           </div>
           <div class="exp-card-index">01</div>
         </div>
@@ -1278,24 +1547,54 @@ footer .section-inner {
         </div>
       </div>
 
-      <div class="exp-card">
+      <div class="exp-card" data-viz="pipeline">
         <div class="exp-card-img">
-          <div class="terminal">
-            <div class="terminal-bar">
-              <div class="terminal-dot"></div><div class="terminal-dot"></div><div class="terminal-dot"></div>
-              <span class="terminal-title">ci/cd pipeline</span>
+          <div class="pipeline-viz">
+            <div class="pipeline-header">
+              <span class="pipeline-title">deploy.yml</span>
+              <span class="pipeline-run" id="pipelineRun"></span>
             </div>
-            <div class="terminal-lines">
-              <div class="line"><span class="prompt">$</span> gh workflow run deploy.yml --ref main</div>
-              <div class="line"><span class="info">◈ Triggered: build → test → stage → prod</span></div>
-              <div class="line"><span class="success">  ✓</span> build <span class="info">— docker image pushed (42s)</span></div>
-              <div class="line"><span class="success">  ✓</span> lint + unit tests <span class="info">— 312 passed (28s)</span></div>
-              <div class="line"><span class="success">  ✓</span> integration tests <span class="info">— 67 passed (1m14s)</span></div>
-              <div class="line"><span class="success">  ✓</span> quality gate <span class="info">— coverage 94.2%</span></div>
-              <div class="line"><span class="success">  ✓</span> deploy staging <span class="info">— health check OK</span></div>
-              <div class="line"><span class="warn">  ⏳</span> awaiting approval for prod...</div>
-              <div class="line"><br></div>
-              <div class="line"><span class="bright">  Pipeline healthy</span> <span class="info">(2m41s)</span><span class="cursor"></span></div>
+            <div class="pipeline-canvas" id="pipelineCanvas">
+              <!-- Stages row -->
+              <div class="pipeline-stages">
+                <div class="pipeline-stage" data-stage="0">
+                  <div class="stage-icon">⚙</div>
+                  <div class="stage-label">Build</div>
+                  <div class="stage-time"></div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage" data-stage="1">
+                  <div class="stage-icon">⬡</div>
+                  <div class="stage-label">Lint</div>
+                  <div class="stage-time"></div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage" data-stage="2">
+                  <div class="stage-icon">▦</div>
+                  <div class="stage-label">Test</div>
+                  <div class="stage-time"></div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage" data-stage="3">
+                  <div class="stage-icon">◈</div>
+                  <div class="stage-label">Gate</div>
+                  <div class="stage-time"></div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage" data-stage="4">
+                  <div class="stage-icon">▲</div>
+                  <div class="stage-label">Stage</div>
+                  <div class="stage-time"></div>
+                </div>
+                <div class="pipeline-connector"></div>
+                <div class="pipeline-stage" data-stage="5">
+                  <div class="stage-icon">●</div>
+                  <div class="stage-label">Prod</div>
+                  <div class="stage-time"></div>
+                </div>
+              </div>
+              <!-- Jobs detail below -->
+              <div class="pipeline-jobs" id="pipelineJobs"></div>
             </div>
           </div>
           <div class="exp-card-index">03</div>
@@ -1464,36 +1763,6 @@ function randomizeTerminal(card) {
   if (!title) return;
   var t = title.textContent.trim();
 
-  if (t === 'playwright') {
-    var total = rand(32, 72);
-    var workers = rand(3, 8);
-    var times = [dec(rand(3,18)), dec(rand(4,14)), dec(rand(2,6)), dec(rand(15,31)), dec(rand(8,24)), dec(rand(3,9))];
-    var dur = rand(22, 58);
-    var cov = (rand(880,980)/10).toFixed(1);
-    var bars = [rand(88,99), rand(84,97), rand(78,93), rand(90,99)];
-    lines[1].innerHTML = '<span class="info">Running ' + total + ' tests using ' + workers + ' workers</span>';
-    lines[2].innerHTML = '<span class="success">  ✓</span> login.spec.ts — authenticates user <span class="info">(' + times[0] + 's)</span>';
-    lines[3].innerHTML = '<span class="success">  ✓</span> dashboard.spec.ts — loads metrics <span class="info">(' + times[1] + 's)</span>';
-    lines[4].innerHTML = '<span class="success">  ✓</span> api/orders.spec.ts — validates schema <span class="info">(' + times[2] + 's)</span>';
-    lines[5].innerHTML = '<span class="warn">  ◌</span> checkout.spec.ts — retry 1/' + rand(2,3) + ' <span class="info">(' + times[3] + 's)</span>';
-    lines[6].innerHTML = '<span class="success">  ✓</span> checkout.spec.ts — completes flow <span class="info">(' + times[4] + 's)</span>';
-    lines[7].innerHTML = '<span class="success">  ✓</span> reports/export.spec.ts — downloads PDF <span class="info">(' + times[5] + 's)</span>';
-    lines[9].innerHTML = '<span class="bright">  ' + total + ' passed</span> <span class="info">(' + dur + 's)</span>';
-    var report = lines[11];
-    if (report) {
-      report.querySelector('.report-header .success').textContent = cov + '%';
-      var rows = report.querySelectorAll('.report-row');
-      rows.forEach(function(row, i) {
-        var fill = row.querySelector('.bar-fill');
-        var val = bars[i];
-        fill.style.width = val + '%';
-        row.querySelector('span:last-child').textContent = val + '%';
-      });
-      var footer = report.querySelector('.report-footer');
-      footer.innerHTML = '<span class="success">■</span><span class="info"> ' + total + ' pass</span><span class="warn">■</span><span class="info"> ' + rand(0,3) + ' retry</span><span class="info">■ 0 fail</span>';
-    }
-  }
-
   if (t === 'ai-agent') {
     var tickets = rand(800, 4200);
     var clusters = rand(4, 14);
@@ -1510,28 +1779,189 @@ function randomizeTerminal(card) {
     lines[9].innerHTML = '<span class="bright">  Done</span> <span class="info">— ' + recs + ' actionable recommendations</span><span class="cursor"></span>';
   }
 
-  if (t === 'ci/cd pipeline') {
-    var units = rand(180, 520);
-    var integ = rand(34, 120);
-    var cov2 = (rand(860,990)/10).toFixed(1);
-    var buildT = rand(24, 68);
-    var unitT = rand(16, 45);
-    var integM = rand(1, 2);
-    var integS = rand(4, 58);
-    var totalT = rand(120, 340);
-    var m = Math.floor(totalT / 60);
-    var s = totalT % 60;
-    lines[2].innerHTML = '<span class="success">  ✓</span> build <span class="info">— docker image pushed (' + buildT + 's)</span>';
-    lines[3].innerHTML = '<span class="success">  ✓</span> lint + unit tests <span class="info">— ' + units + ' passed (' + unitT + 's)</span>';
-    lines[4].innerHTML = '<span class="success">  ✓</span> integration tests <span class="info">— ' + integ + ' passed (' + integM + 'm' + (integS < 10 ? '0' : '') + integS + 's)</span>';
-    lines[5].innerHTML = '<span class="success">  ✓</span> quality gate <span class="info">— coverage ' + cov2 + '%</span>';
-    lines[9].innerHTML = '<span class="bright">  Pipeline healthy</span> <span class="info">(' + m + 'm' + (s < 10 ? '0' : '') + s + 's)</span><span class="cursor"></span>';
+}
+
+/* Defect Cluster Visualization */
+var clusterColors = ['#d83900','#4ade80','#fbbf24','#60a5fa','#c084fc'];
+var clusterNames = ['auth-timeout','null-ref','race-condition','stale-cache','rate-limiter'];
+var defectTypes = ['Critical','Major','Minor'];
+var modules = ['Auth','Cart','Checkout','Payments','Reports','Search','Users','API'];
+
+function buildClusterViz(card) {
+  var canvas = card.querySelector('.cluster-canvas');
+  var legend = card.querySelector('#clusterLegend');
+  var counter = card.querySelector('.cluster-count');
+  var tooltip = card.querySelector('#clusterTooltip');
+  if (!canvas || canvas.children.length > 0) return;
+
+  var numClusters = rand(4, 6);
+  var totalDots = rand(40, 65);
+  var dots = [];
+
+  // Generate cluster centers
+  var centers = [];
+  for (var i = 0; i < numClusters; i++) {
+    centers.push({
+      x: rand(12, 88),
+      y: rand(12, 88),
+      name: clusterNames[i % clusterNames.length],
+      color: clusterColors[i % clusterColors.length],
+      count: 0
+    });
   }
+
+  // Generate dots around centers
+  for (var d = 0; d < totalDots; d++) {
+    var ci = rand(0, numClusters - 1);
+    var c = centers[ci];
+    var spread = rand(4, 16);
+    var x = Math.max(2, Math.min(96, c.x + (Math.random() - 0.5) * spread * 2));
+    var y = Math.max(2, Math.min(96, c.y + (Math.random() - 0.5) * spread * 2));
+    var size = pick(['size-sm','size-sm','size-md','size-md','size-lg']);
+    var severity = pick(defectTypes);
+    var mod = pick(modules);
+    c.count++;
+    dots.push({ x: x, y: y, ci: ci, size: size, severity: severity, module: mod });
+  }
+
+  counter.textContent = totalDots + ' defects · ' + numClusters + ' clusters';
+
+  // Render dots with staggered animation
+  dots.forEach(function(dot, idx) {
+    var el = document.createElement('div');
+    el.className = 'cluster-dot ' + dot.size;
+    el.setAttribute('data-cluster', dot.ci);
+    el.style.left = dot.x + '%';
+    el.style.top = dot.y + '%';
+    el.style.background = centers[dot.ci].color;
+    el.style.transitionDelay = (idx * 30) + 'ms';
+
+    el.addEventListener('mouseenter', function(e) {
+      tooltip.innerHTML = '<strong>' + centers[dot.ci].name + '</strong>' + dot.severity + ' · ' + dot.module + ' module';
+      tooltip.classList.add('show');
+      var rect = canvas.getBoundingClientRect();
+      tooltip.style.left = (dot.x > 60 ? dot.x - 25 : dot.x + 4) + '%';
+      tooltip.style.top = (dot.y > 70 ? dot.y - 15 : dot.y + 5) + '%';
+    });
+    el.addEventListener('mouseleave', function() {
+      tooltip.classList.remove('show');
+    });
+
+    canvas.appendChild(el);
+  });
+
+  // Render legend
+  centers.forEach(function(c, i) {
+    var item = document.createElement('div');
+    item.className = 'cluster-legend-item';
+    item.innerHTML = '<div class="legend-dot" style="background:' + c.color + '"></div>' + c.name + ' (' + c.count + ')';
+
+    item.addEventListener('mouseenter', function() {
+      canvas.querySelectorAll('.cluster-dot').forEach(function(d) {
+        d.style.opacity = parseInt(d.getAttribute('data-cluster')) === i ? '1' : '0.15';
+      });
+    });
+    item.addEventListener('mouseleave', function() {
+      canvas.querySelectorAll('.cluster-dot').forEach(function(d) {
+        d.style.opacity = '';
+      });
+    });
+
+    legend.appendChild(item);
+  });
+
+  // Trigger animation
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      canvas.querySelectorAll('.cluster-dot').forEach(function(d) {
+        d.classList.add('visible');
+      });
+    });
+  });
+}
+
+/* Pipeline Visualization */
+function buildPipelineViz(card) {
+  var stages = card.querySelectorAll('.pipeline-stage');
+  var connectors = card.querySelectorAll('.pipeline-connector');
+  var jobsContainer = card.querySelector('#pipelineJobs');
+  var runLabel = card.querySelector('#pipelineRun');
+  if (stages[0].classList.contains('active')) return;
+
+  var runNum = rand(140, 380);
+  var branch = pick(['main', 'main', 'release/2.4', 'release/3.0']);
+  runLabel.textContent = '#' + runNum + ' · ' + branch;
+
+  var stageTimes = [rand(18,55)+'s', rand(8,22)+'s', rand(45,140)+'s', rand(2,8)+'s', rand(12,35)+'s', ''];
+  var stageStates = ['done','done','done','done','done','approved'];
+  var jobEntries = [
+    { s: '', n: 'docker build + push', d: 'image: app:' + runNum },
+    { s: '', n: 'eslint + prettier', d: rand(0,4) + ' warnings' },
+    { s: '', n: 'unit tests', d: rand(180,520) + ' passed' },
+    { s: '', n: 'integration tests', d: rand(34,120) + ' passed' },
+    { s: '', n: 'coverage gate', d: (rand(880,990)/10).toFixed(1) + '%' },
+    { s: '', n: 'deploy → staging', d: 'health check OK' },
+    { s: 'warn', n: 'approval', d: 'approved by @joren' }
+  ];
+
+  // Add connector fill divs
+  connectors.forEach(function(c) {
+    var fill = document.createElement('div');
+    fill.className = 'connector-fill';
+    c.appendChild(fill);
+  });
+
+  // Animate stages sequentially
+  var delay = 0;
+  stages.forEach(function(stage, i) {
+    delay += rand(300, 600);
+    setTimeout(function() {
+      stage.classList.add('active');
+      stage.classList.add(stageStates[i]);
+      stage.querySelector('.stage-time').textContent = stageTimes[i];
+
+      // Fill the connector before this stage
+      if (i > 0 && connectors[i-1]) {
+        connectors[i-1].classList.add('filled');
+      }
+    }, delay);
+
+    // Brief "running" state before "done"
+    if (stageStates[i] === 'done') {
+      var runStart = delay - 200;
+      setTimeout(function() {
+        stage.classList.add('active', 'running');
+      }, runStart);
+      setTimeout(function() {
+        stage.classList.remove('running');
+        stage.classList.add('done');
+      }, delay);
+    }
+  });
+
+  // Animate job log entries
+  jobEntries.forEach(function(job, i) {
+    setTimeout(function() {
+      var el = document.createElement('div');
+      el.className = 'pipeline-job';
+      el.innerHTML = '<div class="job-status ' + job.s + '"></div><span class="job-name">' + job.n + '</span><span class="job-detail">' + job.d + '</span>';
+      jobsContainer.appendChild(el);
+      requestAnimationFrame(function() {
+        el.classList.add('visible');
+      });
+    }, 400 + i * 400);
+  });
 }
 
 function activateCard(card) {
   if (!card.classList.contains('activated')) {
-    randomizeTerminal(card);
+    if (card.getAttribute('data-viz') === 'cluster') {
+      buildClusterViz(card);
+    } else if (card.getAttribute('data-viz') === 'pipeline') {
+      buildPipelineViz(card);
+    } else {
+      randomizeTerminal(card);
+    }
     card.classList.add('activated');
     var tl = card.querySelector('.terminal-lines');
     if (tl) {
