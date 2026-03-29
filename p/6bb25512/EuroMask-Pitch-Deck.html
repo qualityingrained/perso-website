@@ -1621,6 +1621,28 @@
 
     updateSlides();
 
+    // Touch swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+    wrapper.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    wrapper.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const diff = touchStartX - touchEndX;
+        if (Math.abs(diff) > 50) {
+            if (diff > 0 && currentSlide < totalSlides) { currentSlide++; updateSlides(); }
+            else if (diff < 0 && currentSlide > 1) { currentSlide--; updateSlides(); }
+        }
+    }, { passive: true });
+
+    // Tap left/right halves to navigate
+    wrapper.addEventListener('click', (e) => {
+        if (e.target.closest('.nav-btn') || e.target.closest('button') || e.target.closest('a')) return;
+        const rect = wrapper.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        if (x > rect.width * 0.65 && currentSlide < totalSlides) { currentSlide++; updateSlides(); }
+        else if (x < rect.width * 0.35 && currentSlide > 1) { currentSlide--; updateSlides(); }
+    });
+
     // Demo toggle (slide 4)
     // Privacy pipeline step switcher
     const privStepColors = {
