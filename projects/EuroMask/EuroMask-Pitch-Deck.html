@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EuroMask — PII Redaction That Understands Europe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;700;800&family=Lato:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ============================================
+           1. CORE SETUP
+           ============================================ */
+        * { box-sizing: border-box; }
+        p { margin: 0; margin-bottom: 12px; }
+
+        body {
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #presentation-wrapper {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
+        }
+
+        /* ============================================
+           2. THEME COLORS
+           ============================================ */
+        :root {
+            --em-primary: #00D4FF;
+            --em-primary-rgb: 0, 212, 255;
+            --em-secondary: #0D0D1A;
+            --em-secondary-light: #1A1A2E;
+            --em-accent: #FF4D6D;
+            --em-accent-alt: #7B2DFF;
+            --em-success: #00F5A0;
+            --em-warning: #FFB020;
+            --em-text-muted: #8892A0;
+        }
+
+        /* ============================================
+           3. SLIDE CONTAINER BASE
+           ============================================ */
+        .slide-container {
+            align-items: center;
+            display: none;
+            flex-direction: column;
+            font-family: 'Lato', sans-serif;
+            height: 100%;
+            width: 100%;
+            justify-content: center;
+            overflow: hidden;
+            padding: 60px 80px;
+            position: absolute;
+            top: 0; left: 0;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            background-color: var(--em-secondary);
+            color: #f1f5f9;
+        }
+
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: -150px; right: -150px;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(var(--em-primary-rgb), 0.12) 0%, transparent 70%);
+            z-index: 0;
+        }
+
+        .slide-container::after {
+            content: '';
+            position: absolute;
+            bottom: 40px; left: 80px;
+            width: calc(100% - 160px);
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(var(--em-primary-rgb), 0.4), transparent);
+            z-index: 1;
+        }
+
+        .slide-container > * { position: relative; z-index: 2; }
+
+        .slide-container.active {
+            display: flex;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .theme-title {
+            background: linear-gradient(135deg, #030712 0%, #0D0D1A 50%, #0a1628 100%);
+        }
+
+        .theme-title::before {
+            width: 800px; height: 800px;
+            top: -300px; right: -200px;
+            background: radial-gradient(circle, rgba(var(--em-primary-rgb), 0.08) 0%, transparent 70%);
+        }
+
+        /* ============================================
+           4. TYPOGRAPHY
+           ============================================ */
+        h1, h2, h3 { font-family: 'Urbanist', sans-serif; margin: 0; line-height: 1.1; }
+        h1 { font-size: 72px; font-weight: 800; letter-spacing: -2px; }
+        h1 span.accent { color: var(--em-primary); }
+
+        .slide-title {
+            font-size: 38px; font-weight: 700;
+            margin-bottom: 36px;
+            text-align: left; width: 100%;
+            border-left: 6px solid var(--em-primary);
+            padding-left: 20px; color: #f8fafc;
+        }
+
+        h3 { font-size: 24px; font-weight: 600; margin-bottom: 12px; color: var(--em-primary); }
+        p, li { font-size: 18px; color: #94a3b8; line-height: 1.5; }
+        li { margin-bottom: 10px; }
+
+        .content-area {
+            display: flex; flex-direction: column;
+            flex-grow: 1; justify-content: center;
+            width: 100%;
+        }
+
+        /* ============================================
+           5. LAYOUT UTILITIES
+           ============================================ */
+        .title-layout { text-align: center; }
+        .subtitle { font-size: 22px; color: #94a3b8; margin-top: 25px; max-width: 850px; margin-left: auto; margin-right: auto; line-height: 1.4; }
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; align-items: center; }
+        .three-column { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; }
+        .accent-text { color: var(--em-primary); font-weight: 700; }
+        .slide-footer { position: absolute; bottom: 16px; left: 80px; font-size: 11px; color: #475569; letter-spacing: 1px; z-index: 5; }
+
+        /* ============================================
+           6. INTERACTIVE CARDS & TOOLTIPS
+           ============================================ */
+        .node-box {
+            background: #111827; border: 1px solid #1e293b;
+            border-radius: 16px; padding: 25px;
+            position: relative; cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+        }
+
+        .node-box:hover {
+            transform: translateY(-8px);
+            border-color: var(--em-primary);
+            background: rgba(var(--em-primary-rgb), 0.08);
+            box-shadow: 0 15px 40px rgba(var(--em-primary-rgb), 0.2);
+        }
+
+        .node-box i { font-size: 36px; margin-bottom: 15px; display: block; color: var(--em-primary); }
+        .node-box .node-title { font-weight: 700; font-size: 18px; color: #f1f5f9; margin-bottom: 5px; }
+        .node-box .node-subtitle { font-size: 12px; color: #64748b; }
+
+        .tooltip {
+            position: absolute; bottom: 110%; left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 280px; background: #0f172a;
+            border: 1px solid var(--em-primary);
+            padding: 18px; border-radius: 12px;
+            color: #cbd5e1; font-size: 14px; line-height: 1.5;
+            opacity: 0; visibility: hidden;
+            transition: all 0.3s ease; z-index: 100;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            text-align: left; pointer-events: none;
+        }
+
+        .node-box:hover .tooltip {
+            opacity: 1; visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ============================================
+           7. STAT BOXES
+           ============================================ */
+        .stat-box {
+            background: #111827; border: 1px solid #1e293b;
+            border-radius: 16px; padding: 25px;
+            text-align: center; transition: all 0.3s ease;
+        }
+        .stat-box:hover { transform: translateY(-5px); }
+        .stat-box .stat-value { font-family: 'Urbanist'; font-size: 42px; font-weight: 800; }
+        .stat-box .stat-label { font-size: 13px; color: #64748b; margin-top: 8px; }
+
+        /* ============================================
+           8. MOCK TERMINAL
+           ============================================ */
+        .mock-ui-container {
+            width: 100%; background: #0f172a;
+            border: 1px solid #1e293b; border-radius: 12px;
+            overflow: hidden; display: flex; flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        .mock-header {
+            height: 36px; min-height: 36px; flex-shrink: 0;
+            background: #1e293b; display: flex;
+            align-items: center; padding: 0 14px; gap: 6px;
+        }
+
+        .mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .mock-dot.red { background: #ef4444; }
+        .mock-dot.yellow { background: #f59e0b; }
+        .mock-dot.green { background: #10b981; }
+
+        .mock-body {
+            flex: 1; padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: #cbd5e1;
+            display: flex; flex-direction: column;
+            gap: 6px; overflow: hidden;
+        }
+
+        .typing-line {
+            display: block; overflow: hidden;
+            white-space: nowrap; width: 0;
+        }
+
+        @keyframes typeLine { 0% { width: 0; } 100% { width: 100%; } }
+
+        .typing-cursor {
+            display: inline-block; width: 2px; height: 1em;
+            background: var(--em-primary); margin-left: 2px; vertical-align: middle;
+        }
+
+        @keyframes blinkCursor { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* ============================================
+           9. PROGRESS RINGS
+           ============================================ */
+        .progress-ring { position: relative; width: 130px; height: 130px; }
+        .progress-ring svg { transform: rotate(-90deg); }
+        .progress-ring circle { fill: none; stroke-width: 8; }
+        .progress-ring .bg { stroke: #1e293b; }
+        .progress-ring .progress {
+            stroke-dasharray: 364.425; stroke-dashoffset: 364.425;
+            stroke-linecap: round;
+            animation: fillRing 2s ease-out forwards;
+        }
+        @keyframes fillRing { to { stroke-dashoffset: var(--offset); } }
+        .progress-ring .value {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Urbanist'; font-size: 28px; font-weight: 800; color: #fff;
+        }
+        .progress-ring .ring-label {
+            text-align: center; margin-top: 12px;
+            font-size: 13px; color: #94a3b8; font-weight: 600;
+        }
+
+        /* ============================================
+           10. PIPELINE FLOW
+           ============================================ */
+        .pipeline-container { display: flex; align-items: center; gap: 0; width: 100%; }
+
+        .pipeline-stage {
+            flex: 1; padding: 20px 16px; border-radius: 14px;
+            text-align: center; position: relative;
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .pipeline-stage:hover { transform: translateY(-6px); z-index: 10; }
+
+        .pipeline-arrow { font-size: 28px; color: #334155; flex-shrink: 0; margin: 0 -4px; }
+
+        .pipeline-stage .stage-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+        .pipeline-stage .stage-title { font-weight: 700; font-size: 14px; color: #f1f5f9; margin-bottom: 4px; }
+        .pipeline-stage .stage-detail { font-size: 11px; color: #64748b; }
+
+        @keyframes flowPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+        /* ============================================
+           11. COMPARISON TABLE
+           ============================================ */
+        .compare-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; }
+        .compare-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; padding: 10px 14px; text-align: left; font-weight: 600; }
+        .compare-table td { padding: 12px 14px; font-size: 13px; color: #94a3b8; background: #111827; }
+        .compare-table tr td:first-child { border-radius: 8px 0 0 8px; font-weight: 700; color: #f1f5f9; }
+        .compare-table tr td:last-child { border-radius: 0 8px 8px 0; }
+        .compare-table .em-highlight td { background: rgba(var(--em-primary-rgb), 0.08); color: #f1f5f9; border-top: 1px solid rgba(var(--em-primary-rgb), 0.3); border-bottom: 1px solid rgba(var(--em-primary-rgb), 0.3); }
+        .compare-table .em-highlight td:first-child { border-left: 1px solid rgba(var(--em-primary-rgb), 0.3); }
+        .compare-table .em-highlight td:last-child { border-right: 1px solid rgba(var(--em-primary-rgb), 0.3); }
+
+        /* ============================================
+           12. PRICING CARDS
+           ============================================ */
+        .pricing-card {
+            background: #111827; border: 1px solid #1e293b;
+            border-radius: 16px; padding: 28px 22px;
+            text-align: center; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .pricing-card.featured {
+            border-color: var(--em-primary);
+            background: linear-gradient(180deg, rgba(var(--em-primary-rgb), 0.08) 0%, #111827 100%);
+        }
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR'; position: absolute;
+            top: 12px; right: -32px;
+            background: var(--em-primary); color: #000;
+            font-size: 8px; font-weight: 800; letter-spacing: 1px;
+            padding: 4px 34px; transform: rotate(45deg);
+        }
+        .pricing-card .price { font-family: 'Urbanist'; font-size: 40px; font-weight: 800; color: #f1f5f9; margin: 14px 0 4px; }
+        .pricing-card .price-period { font-size: 13px; color: #64748b; }
+        .pricing-card .plan-name { font-family: 'Urbanist'; font-size: 18px; font-weight: 700; color: var(--em-primary); }
+        .pricing-card .feature-list { text-align: left; margin-top: 16px; }
+        .pricing-card .feature-item { font-size: 12px; color: #94a3b8; padding: 5px 0; display: flex; align-items: center; gap: 8px; }
+        .pricing-card .feature-item i { color: var(--em-success); font-size: 10px; flex-shrink: 0; }
+
+        /* ============================================
+           13. COUNTRY GRID
+           ============================================ */
+        .country-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .country-cell {
+            border-radius: 8px; padding: 10px 6px; text-align: center;
+            font-size: 11px; font-weight: 700;
+            transition: all 0.3s ease; cursor: pointer; position: relative;
+        }
+        .country-cell:hover { transform: scale(1.1); z-index: 10; }
+        .country-cell .country-flag { font-size: 20px; display: block; margin-bottom: 4px; }
+        .country-cell .country-code { color: #f1f5f9; }
+        .country-cell .country-phase { font-size: 8px; margin-top: 2px; display: block; }
+        .phase-1 { background: rgba(0,245,160,0.15); border: 1px solid rgba(0,245,160,0.3); }
+        .phase-1 .country-phase { color: var(--em-success); }
+        .phase-2 { background: rgba(0,212,255,0.12); border: 1px solid rgba(0,212,255,0.25); }
+        .phase-2 .country-phase { color: var(--em-primary); }
+        .phase-3 { background: rgba(255,176,32,0.12); border: 1px solid rgba(255,176,32,0.25); }
+        .phase-3 .country-phase { color: var(--em-warning); }
+        .phase-4 { background: rgba(123,45,255,0.12); border: 1px solid rgba(123,45,255,0.25); }
+        .phase-4 .country-phase { color: var(--em-accent-alt); }
+
+        /* ============================================
+           14. NAVIGATION
+           ============================================ */
+        .nav-controls { position: fixed; bottom: 25px; right: 25px; display: flex; gap: 8px; z-index: 1000; }
+        .nav-btn {
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 1px solid #334155;
+            background: rgba(17,24,39,0.9); color: #94a3b8;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; backdrop-filter: blur(10px);
+        }
+        .nav-btn:hover { border-color: var(--em-primary); color: var(--em-primary); background: rgba(0,212,255,0.1); }
+        .slide-indicator {
+            position: fixed; bottom: 30px; left: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: #475569; z-index: 1000;
+        }
+
+        /* ============================================
+           15. ANIMATED BAR CHART
+           ============================================ */
+        .bar-chart { display: flex; align-items: flex-end; gap: 12px; height: 160px; padding-top: 10px; }
+        .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+        .bar {
+            width: 100%; border-radius: 6px 6px 0 0;
+            height: 0; animation: growBar 1.2s ease-out forwards;
+            position: relative; cursor: pointer; transition: filter 0.2s;
+        }
+        .bar:hover { filter: brightness(1.3); }
+        @keyframes growBar { from { height: 0; } to { height: var(--h); } }
+        .bar-label { font-size: 10px; color: #64748b; margin-top: 6px; text-align: center; font-weight: 600; }
+        .bar-value {
+            position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            font-family: 'Urbanist'; font-size: 12px; font-weight: 700; color: #f1f5f9;
+            opacity: 0; animation: fadeIn 0.3s ease forwards; animation-delay: 1.3s;
+        }
+
+        /* ============================================
+           16. LIVE DEMO SECTION
+           ============================================ */
+        .demo-input-area, .demo-output-area {
+            background: #0f172a; border: 1px solid #1e293b;
+            border-radius: 12px; padding: 18px; height: 100%;
+            font-family: 'JetBrains Mono', monospace; font-size: 12px;
+            line-height: 1.8; overflow: hidden;
+        }
+
+        .pii-highlight {
+            padding: 2px 4px; border-radius: 3px;
+            font-weight: 700; position: relative;
+        }
+
+        .pii-name { background: rgba(123,45,255,0.2); color: var(--em-accent-alt); border: 1px solid rgba(123,45,255,0.4); }
+        .pii-id { background: rgba(0,212,255,0.2); color: var(--em-primary); border: 1px solid rgba(0,212,255,0.4); }
+        .pii-phone { background: rgba(0,245,160,0.2); color: var(--em-success); border: 1px solid rgba(0,245,160,0.4); }
+        .pii-email { background: rgba(255,176,32,0.2); color: var(--em-warning); border: 1px solid rgba(255,176,32,0.4); }
+        .pii-iban { background: rgba(255,77,109,0.2); color: var(--em-accent); border: 1px solid rgba(255,77,109,0.4); }
+
+        .redacted {
+            background: #1e293b; color: #475569;
+            padding: 2px 6px; border-radius: 3px;
+            font-weight: 700; letter-spacing: 1px;
+        }
+
+        /* PII legend */
+        .pii-legend { display: flex; gap: 14px; flex-wrap: wrap; }
+        .pii-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #94a3b8; }
+        .pii-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+        /* Slide-specific: before/after toggle */
+        .demo-toggle {
+            display: flex; gap: 4px; background: rgba(255,255,255,0.05);
+            border-radius: 8px; padding: 4px; width: fit-content; margin-bottom: 16px;
+        }
+        .demo-toggle-btn {
+            padding: 7px 18px; border-radius: 6px; border: none;
+            font-family: 'Lato', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            background: transparent; color: var(--em-text-muted);
+        }
+        .demo-toggle-btn.active { background: var(--em-primary); color: #000; }
+
+        .demo-panel { display: none; animation: fadeIn 0.3s ease-out; }
+        .demo-panel.active { display: block; }
+
+        /* ============================================
+           17. TRUST BADGES
+           ============================================ */
+        .trust-row {
+            display: flex; gap: 16px; justify-content: center; margin-top: 20px; flex-wrap: wrap;
+        }
+        .trust-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 8px;
+            font-size: 13px; font-weight: 700;
+        }
+
+        /* ============================================
+           18. INFRA STAGE CARDS
+           ============================================ */
+        .infra-stage {
+            background: #111827; border: 1px solid #1e293b;
+            border-radius: 12px; padding: 20px;
+            transition: all 0.3s ease; cursor: pointer;
+        }
+        .infra-stage:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .infra-stage .stage-badge {
+            font-size: 9px; font-weight: 700; letter-spacing: 1px;
+            padding: 3px 10px; border-radius: 4px; display: inline-block; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="presentation-wrapper">
+
+<!-- ============================================
+     SLIDE 1: TITLE — CUSTOMER HOOK
+     ============================================ -->
+<div class="slide-container theme-title active" id="slide-1">
+    <div class="title-layout">
+        <div style="font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--em-primary); margin-bottom: 20px;">PII REDACTION · BUILT FOR EUROPE</div>
+        <h1 style="margin-bottom: 15px;"><span class="accent">Euro</span>Mask</h1>
+        <p class="subtitle">Remove personal data from documents with a single function call.<br>Structured PII never leaves your device.</p>
+        <div style="display: flex; gap: 24px; justify-content: center; margin-top: 45px;">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8;">
+                <i class="fa-solid fa-lock" style="color: var(--em-success);"></i> GDPR-Compliant
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8;">
+                <i class="fa-solid fa-bolt" style="color: var(--em-primary);"></i> One-Line Integration
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8;">
+                <i class="fa-solid fa-earth-europe" style="color: var(--em-accent-alt);"></i> 27 EU Countries
+            </div>
+        </div>
+        <div style="margin-top: 35px;">
+            <span class="pii-legend-item" style="font-size: 13px; color: #475569;">pip install euromask</span>
+        </div>
+    </div>
+    <div class="slide-footer">euromask.eu</div>
+</div>
+
+<!-- ============================================
+     SLIDE 2: THE PROBLEM YOUR CUSTOMERS FACE
+     ============================================ -->
+<div class="slide-container" id="slide-2">
+    <h2 class="slide-title">The Problem</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <p style="font-size: 20px; color: #f1f5f9; line-height: 1.6; margin-bottom: 28px;">You need to strip PII from documents for GDPR — but current tools either <span style="color: var(--em-accent); font-weight: 700;">send your data abroad</span>, <span style="color: var(--em-warning); font-weight: 700;">miss half the PII</span>, or <span style="color: var(--em-accent-alt); font-weight: 700;">take weeks to deploy</span>.</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #111827; border-radius: 10px; border: 1px solid #1e293b; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='var(--em-accent)';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='#1e293b';this.style.transform='none'">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 20px; color: var(--em-accent); flex-shrink: 0;"></i>
+                        <div>
+                            <div style="font-size: 14px; color: #f1f5f9; font-weight: 700;">Cloud APIs send raw documents to US servers</div>
+                            <div style="font-size: 12px; color: #64748b;">AWS Comprehend, Azure AI, Nutrient — your PII crosses borders</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #111827; border-radius: 10px; border: 1px solid #1e293b; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='var(--em-warning)';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='#1e293b';this.style.transform='none'">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 20px; color: var(--em-warning); flex-shrink: 0;"></i>
+                        <div>
+                            <div style="font-size: 14px; color: #f1f5f9; font-weight: 700;">Open-source tools miss European PII</div>
+                            <div style="font-size: 12px; color: #64748b;">Presidio misses up to 46.5% of EU-specific personal data</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: #111827; border-radius: 10px; border: 1px solid #1e293b; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='var(--em-accent-alt)';this.style.transform='translateX(4px)'" onmouseout="this.style.borderColor='#1e293b';this.style.transform='none'">
+                        <i class="fa-solid fa-clock" style="font-size: 20px; color: var(--em-accent-alt); flex-shrink: 0;"></i>
+                        <div>
+                            <div style="font-size: 14px; color: #f1f5f9; font-weight: 700;">Enterprise solutions need weeks to deploy</div>
+                            <div style="font-size: 12px; color: #64748b;">Private AI requires Kubernetes, 4–8 week timelines, enterprise budgets</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                <div style="background: rgba(255,77,109,0.06); border: 1px solid rgba(255,77,109,0.2); border-radius: 16px; padding: 28px; text-align: center; width: 100%;">
+                    <div style="font-family: 'Urbanist'; font-size: 72px; font-weight: 800; color: var(--em-accent); line-height: 1;">46.5%</div>
+                    <div style="font-size: 15px; color: var(--em-accent); font-weight: 700; margin-top: 10px;">of EU PII missed by existing tools</div>
+                    <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Names, addresses, national IDs, context-dependent data</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+                    <div class="stat-box" style="padding: 18px; border-color: rgba(255,77,109,0.3);">
+                        <div class="stat-value" style="font-size: 28px; color: var(--em-accent);">€1.2B</div>
+                        <div class="stat-label" style="font-size: 11px;">GDPR fines in 2024</div>
+                    </div>
+                    <div class="stat-box" style="padding: 18px; border-color: rgba(var(--em-primary-rgb),0.3);">
+                        <div class="stat-value" style="font-size: 28px; color: var(--em-primary);">27</div>
+                        <div class="stat-label" style="font-size: 11px;">EU countries, each with unique PII formats</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · The Problem</div>
+</div>
+
+<!-- ============================================
+     SLIDE 3: HOW IT WORKS — PIPELINE
+     ============================================ -->
+<div class="slide-container" id="slide-3">
+    <h2 class="slide-title">How EuroMask Works</h2>
+    <div class="content-area">
+        <p style="font-size: 17px; color: #94a3b8; margin-bottom: 30px; max-width: 900px;">A local rule engine strips structured PII <span class="accent-text">on your device</span> before anything reaches the cloud. The hosted model only sees pre-scrubbed text.</p>
+        <div class="pipeline-container">
+            <div class="pipeline-stage" style="background: rgba(255,255,255,0.04); border: 1px solid #1e293b;">
+                <div class="tooltip" style="width: 240px;">Your documents enter the SDK. PDFs, emails, database fields, free text — any format, any EU language cluster.</div>
+                <i class="fa-solid fa-file-lines stage-icon" style="color: #94a3b8;"></i>
+                <div class="stage-title">Your Document</div>
+                <div class="stage-detail">Text containing PII</div>
+            </div>
+            <div class="pipeline-arrow"><i class="fa-solid fa-angles-right" style="animation: flowPulse 2s ease-in-out infinite;"></i></div>
+            <div class="pipeline-stage" style="background: rgba(0,245,160,0.08); border: 1px solid rgba(0,245,160,0.25);">
+                <div class="tooltip" style="width: 260px;"><strong>Runs entirely on your device.</strong> Two-pass detection: liberal pattern matching, then contextual suppression filters eliminate false positives (currency, units, references, formulas). >99% recall, >99% precision. Zero network calls.</div>
+                <i class="fa-solid fa-shield-halved stage-icon" style="color: var(--em-success);"></i>
+                <div class="stage-title">Local Rule Engine</div>
+                <div class="stage-detail">IDs, IBANs, phones stripped locally</div>
+            </div>
+            <div class="pipeline-arrow"><i class="fa-solid fa-angles-right" style="animation: flowPulse 2s ease-in-out infinite; animation-delay: 0.5s;"></i></div>
+            <div class="pipeline-stage" style="background: rgba(123,45,255,0.08); border: 1px solid rgba(123,45,255,0.25);">
+                <div class="tooltip" style="width: 260px;"><strong>Never sees raw structured PII.</strong> Fine-tuned 32B model with per-language LoRA adapters. Catches names, addresses, implied identifiers — what rules can't. European infrastructure.</div>
+                <i class="fa-solid fa-brain stage-icon" style="color: var(--em-accent-alt);"></i>
+                <div class="stage-title">Cloud AI Model</div>
+                <div class="stage-detail">Names, addresses, context</div>
+            </div>
+            <div class="pipeline-arrow"><i class="fa-solid fa-angles-right" style="animation: flowPulse 2s ease-in-out infinite; animation-delay: 1s;"></i></div>
+            <div class="pipeline-stage" style="background: rgba(var(--em-primary-rgb),0.08); border: 1px solid rgba(var(--em-primary-rgb),0.25);">
+                <div class="tooltip" style="width: 240px;">Combined results: every PII entity tagged with type, confidence score, and position. Ready for compliance workflows, audit trails, or downstream processing.</div>
+                <i class="fa-solid fa-check-double stage-icon" style="color: var(--em-primary);"></i>
+                <div class="stage-title">Clean Output</div>
+                <div class="stage-detail">98–99%+ blended recall</div>
+            </div>
+        </div>
+        <div class="trust-row" style="margin-top: 32px;">
+            <div class="trust-badge" style="background: rgba(0,245,160,0.08); border: 1px solid rgba(0,245,160,0.2); color: var(--em-success);">
+                <i class="fa-solid fa-lock"></i> Structured PII never leaves your device
+            </div>
+            <div class="trust-badge" style="background: rgba(var(--em-primary-rgb),0.08); border: 1px solid rgba(var(--em-primary-rgb),0.2); color: var(--em-primary);">
+                <i class="fa-solid fa-server"></i> Hosted on European infrastructure
+            </div>
+            <div class="trust-badge" style="background: rgba(123,45,255,0.08); border: 1px solid rgba(123,45,255,0.2); color: var(--em-accent-alt);">
+                <i class="fa-solid fa-eye"></i> Transparency mode — see exactly what's sent
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Architecture</div>
+</div>
+
+<!-- ============================================
+     SLIDE 4: DATA PRIVACY — SEGMENT & SHUFFLE
+     ============================================ -->
+<div class="slide-container" id="slide-4">
+    <h2 class="slide-title">Your Data Is Useless to the Model</h2>
+    <div class="content-area">
+        <p style="font-size: 15px; color: #94a3b8; margin-bottom: 16px; max-width: 1000px;">The AI model never sees your original document. Click each step to see what happens to your data. <span class="accent-text">Referential integrity is preserved. Context for the model is not.</span></p>
+
+        <!-- Pipeline step buttons -->
+        <div style="display: flex; align-items: center; gap: 0; width: 100%; margin-bottom: 14px;" id="privacyPipeline">
+            <div class="priv-step active" data-step="1" onclick="showPrivStep(1)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(0,245,160,0.08); border: 2px solid rgba(0,245,160,0.4);">
+                <i class="fa-solid fa-file-lines" style="font-size: 20px; color: var(--em-success); display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: var(--em-success);">1 · Input</div>
+                <div style="font-size: 8px; color: var(--em-success); margin-top: 2px; opacity: 0.7;">YOUR INFRA</div>
+            </div>
+            <div style="color: #334155; font-size: 18px; flex-shrink: 0; margin: 0 -2px;"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="priv-step" data-step="2" onclick="showPrivStep(2)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); border: 2px solid #1e293b;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 20px; color: #64748b; display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8;">2 · Rules Strip</div>
+                <div style="font-size: 8px; color: #475569; margin-top: 2px;">YOUR INFRA</div>
+            </div>
+            <div style="color: #334155; font-size: 18px; flex-shrink: 0; margin: 0 -2px;"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="priv-step" data-step="3" onclick="showPrivStep(3)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); border: 2px solid #1e293b;">
+                <i class="fa-solid fa-scissors" style="font-size: 20px; color: #64748b; display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8;">3 · Segment</div>
+                <div style="font-size: 8px; color: #475569; margin-top: 2px;">YOUR INFRA</div>
+            </div>
+            <div style="color: #334155; font-size: 18px; flex-shrink: 0; margin: 0 -2px;"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="priv-step" data-step="4" onclick="showPrivStep(4)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); border: 2px solid #1e293b;">
+                <i class="fa-solid fa-shuffle" style="font-size: 20px; color: #64748b; display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8;">4 · Shuffle</div>
+                <div style="font-size: 8px; color: #475569; margin-top: 2px;">EU CLOUD</div>
+            </div>
+            <div style="color: #334155; font-size: 18px; flex-shrink: 0; margin: 0 -2px;"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="priv-step" data-step="5" onclick="showPrivStep(5)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); border: 2px solid #1e293b;">
+                <i class="fa-solid fa-brain" style="font-size: 20px; color: #64748b; display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8;">5 · AI Annotate</div>
+                <div style="font-size: 8px; color: #475569; margin-top: 2px;">EU CLOUD</div>
+            </div>
+            <div style="color: #334155; font-size: 18px; flex-shrink: 0; margin: 0 -2px;"><i class="fa-solid fa-chevron-right"></i></div>
+            <div class="priv-step" data-step="6" onclick="showPrivStep(6)" style="flex: 1; cursor: pointer; padding: 14px 10px; border-radius: 12px; text-align: center; transition: all 0.3s ease; background: rgba(255,255,255,0.02); border: 2px solid #1e293b;">
+                <i class="fa-solid fa-puzzle-piece" style="font-size: 20px; color: #64748b; display: block; margin-bottom: 6px;"></i>
+                <div style="font-size: 11px; font-weight: 700; color: #94a3b8;">6 · Reassemble</div>
+                <div style="font-size: 8px; color: #475569; margin-top: 2px;">YOUR INFRA</div>
+            </div>
+        </div>
+
+        <!-- Detail panels — one per step, only active one is visible -->
+        <div id="privPanels" style="width: 100%;">
+
+            <!-- Panel 1: Input -->
+            <div class="priv-panel" data-panel="1">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px;">
+                            <div class="mock-dot green" style="width: 7px; height: 7px;"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-success); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-laptop-code" style="margin-right: 4px;"></i>YOUR INFRASTRUCTURE</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">Original document</div>
+                        </div>
+                        <div class="mock-body" style="display: block; padding: 16px; font-size: 13px; line-height: 2.2;">
+                            <span style="color: #94a3b8;">Hierbij verwijs ik </span><span style="color: var(--em-accent-alt); font-weight: 700;">Jan de Vries</span><span style="color: #94a3b8;"> (BSN: </span><span style="color: var(--em-primary); font-weight: 700;">123456789</span><span style="color: #94a3b8;">) naar uw afdeling cardiologie. De patiënt is bereikbaar via </span><span style="color: var(--em-warning); font-weight: 700;">+31 6 12345678</span><span style="color: #94a3b8;">. </span><span style="color: #94a3b8;">Jan heeft ook een wijziging van begunstigde gevraagd.</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">PII DETECTED</div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(123,45,255,0.06); border-radius: 6px; border-left: 3px solid var(--em-accent-alt);">
+                            <i class="fa-solid fa-user" style="color: var(--em-accent-alt); font-size: 11px;"></i>
+                            <span style="font-size: 12px; color: var(--em-accent-alt); font-weight: 700;">NAME</span>
+                            <span style="font-size: 11px; color: #64748b;">Jan de Vries</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(0,212,255,0.06); border-radius: 6px; border-left: 3px solid var(--em-primary);">
+                            <i class="fa-solid fa-id-card" style="color: var(--em-primary); font-size: 11px;"></i>
+                            <span style="font-size: 12px; color: var(--em-primary); font-weight: 700;">BSN</span>
+                            <span style="font-size: 11px; color: #64748b;">123456789</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(255,176,32,0.06); border-radius: 6px; border-left: 3px solid var(--em-warning);">
+                            <i class="fa-solid fa-phone" style="color: var(--em-warning); font-size: 11px;"></i>
+                            <span style="font-size: 12px; color: var(--em-warning); font-weight: 700;">PHONE</span>
+                            <span style="font-size: 11px; color: #64748b;">+31 6 12345678</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(123,45,255,0.06); border-radius: 6px; border-left: 3px solid var(--em-accent-alt);">
+                            <i class="fa-solid fa-user" style="color: var(--em-accent-alt); font-size: 11px;"></i>
+                            <span style="font-size: 12px; color: var(--em-accent-alt); font-weight: 700;">NAME</span>
+                            <span style="font-size: 11px; color: #64748b;">Jan <span style="font-size: 9px; color: #475569;">(partial ref)</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 2: Rules Strip -->
+            <div class="priv-panel" data-panel="2" style="display: none;">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px;">
+                            <div class="mock-dot green" style="width: 7px; height: 7px;"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-success); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-shield-halved" style="margin-right: 4px;"></i>YOUR INFRASTRUCTURE</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">After rule engine</div>
+                        </div>
+                        <div class="mock-body" style="display: block; padding: 16px; font-size: 13px; line-height: 2.2;">
+                            <span style="color: #94a3b8;">Hierbij verwijs ik </span><span style="color: var(--em-accent-alt);">Jan de Vries</span><span style="color: #94a3b8;"> (BSN: </span><span style="color: var(--em-success); font-weight: 700;">[ID_1]</span><span style="color: #94a3b8;">) naar uw afdeling cardiologie. De patiënt is bereikbaar via </span><span style="color: var(--em-success); font-weight: 700;">[PHONE_1]</span><span style="color: #94a3b8;">. Jan heeft ook een wijziging van begunstigde gevraagd.</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">WHAT HAPPENED</div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            The local rule engine replaced <strong style="color: var(--em-primary);">BSN</strong> and <strong style="color: var(--em-warning);">phone number</strong> with typed placeholders. These are structured patterns caught by validators and regex — no cloud needed.
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            <strong style="color: var(--em-accent-alt);">Names</strong> like "Jan de Vries" remain — they require the AI model to identify.
+                        </div>
+                        <div style="font-size: 11px; padding: 8px 12px; background: rgba(0,245,160,0.06); border-radius: 6px; color: var(--em-success); font-weight: 600;">
+                            <i class="fa-solid fa-lock" style="margin-right: 5px;"></i> Structured PII never leaves your machine
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 3: Segment -->
+            <div class="priv-panel" data-panel="3" style="display: none;">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px;">
+                            <div class="mock-dot green" style="width: 7px; height: 7px;"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-success); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-scissors" style="margin-right: 4px;"></i>YOUR INFRASTRUCTURE</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">Sentence segments + hashes</div>
+                        </div>
+                        <div class="mock-body" style="padding: 14px; gap: 8px; font-size: 12px;">
+                            <div style="padding: 10px 12px; background: rgba(0,245,160,0.05); border: 1px solid rgba(0,245,160,0.15); border-radius: 6px; color: #94a3b8; display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="color: var(--em-success); font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; padding-top: 2px;">a3f2</span>
+                                <span>Hierbij verwijs ik <span style="color: var(--em-accent-alt); font-weight: 600;">Jan de Vries</span> (<span style="color: var(--em-success);">[ID_1]</span>) naar uw afdeling cardiologie.</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: rgba(0,245,160,0.05); border: 1px solid rgba(0,245,160,0.15); border-radius: 6px; color: #94a3b8; display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="color: var(--em-success); font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; padding-top: 2px;">b7c1</span>
+                                <span>De patiënt is bereikbaar via <span style="color: var(--em-success);">[PHONE_1]</span>.</span>
+                            </div>
+                            <div style="padding: 10px 12px; background: rgba(0,245,160,0.05); border: 1px solid rgba(0,245,160,0.15); border-radius: 6px; color: #94a3b8; display: flex; align-items: flex-start; gap: 10px;">
+                                <span style="color: var(--em-success); font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; padding-top: 2px;">d9e4</span>
+                                <span><span style="color: var(--em-accent-alt); font-weight: 600;">Jan</span> heeft ook een wijziging van begunstigde gevraagd.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">WHAT HAPPENED</div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            Text is split at <strong style="color: #e2e8f0;">sentence boundaries</strong>. Each segment gets a <strong style="color: var(--em-success);">SHA-256 hash</strong> (shown as first 4 chars).
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            The SDK keeps a local <strong style="color: #e2e8f0;">hash → position mapping</strong> so it can reassemble later. The model only sees the hash, never the position or document structure.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 4: Shuffle -->
+            <div class="priv-panel" data-panel="4" style="display: none;">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px; background: rgba(123,45,255,0.2);">
+                            <div class="mock-dot" style="width: 7px; height: 7px; background: var(--em-accent-alt);"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-accent-alt); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-cloud" style="margin-right: 4px;"></i>EUROMASK CLOUD (EU)</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">Shuffled batch</div>
+                        </div>
+                        <div class="mock-body" style="padding: 14px; gap: 6px; font-size: 12px;">
+                            <div style="padding: 8px 12px; background: rgba(123,45,255,0.04); border: 1px solid rgba(123,45,255,0.1); border-radius: 6px; color: #475569; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; color: #334155;">x4f8</span>
+                                <span style="opacity: 0.4; font-style: italic;">segment from client #217...</span>
+                            </div>
+                            <div style="padding: 8px 12px; background: rgba(123,45,255,0.08); border: 1px solid rgba(123,45,255,0.2); border-radius: 6px; color: #94a3b8; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; color: #475569;">d9e4</span>
+                                <span><span style="color: var(--em-accent-alt);">Jan</span> heeft ook een wijziging van begunstigde gevraagd.</span>
+                            </div>
+                            <div style="padding: 8px 12px; background: rgba(123,45,255,0.04); border: 1px solid rgba(123,45,255,0.1); border-radius: 6px; color: #475569; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; color: #334155;">y2a1</span>
+                                <span style="opacity: 0.4; font-style: italic;">segment from client #94...</span>
+                            </div>
+                            <div style="padding: 8px 12px; background: rgba(123,45,255,0.08); border: 1px solid rgba(123,45,255,0.2); border-radius: 6px; color: #94a3b8; display: flex; align-items: center; gap: 10px;">
+                                <span style="font-size: 9px; font-weight: 700; font-family: 'JetBrains Mono', monospace; min-width: 30px; color: #475569;">a3f2</span>
+                                <span>Hierbij verwijs ik <span style="color: var(--em-accent-alt);">Jan de Vries</span> ([ID_1]) naar uw afdeling...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">WHAT HAPPENED</div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            Your segments are <strong style="color: var(--em-accent-alt);">mixed with segments from other clients</strong>. The model processes them as an unordered batch — it cannot know which segments belong together.
+                        </div>
+                        <div style="font-size: 11px; padding: 8px 12px; background: rgba(123,45,255,0.06); border-radius: 6px; color: var(--em-accent-alt); font-weight: 600;">
+                            <i class="fa-solid fa-eye-slash" style="margin-right: 5px;"></i> Document reconstruction is impossible
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 5: AI Annotate -->
+            <div class="priv-panel" data-panel="5" style="display: none;">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px; background: rgba(123,45,255,0.2);">
+                            <div class="mock-dot" style="width: 7px; height: 7px; background: var(--em-accent-alt);"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-accent-alt); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-brain" style="margin-right: 4px;"></i>EUROMASK CLOUD (EU)</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">Model response</div>
+                        </div>
+                        <div class="mock-body" style="padding: 16px; gap: 10px; font-size: 12px;">
+                            <div style="font-size: 10px; color: #475569; font-weight: 700; letter-spacing: 1px;">RESPONSE FOR HASH a3f2:</div>
+                            <div style="padding: 14px 16px; background: rgba(0,0,0,0.35); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 2.0; color: #94a3b8;">
+                                {<br>
+                                &nbsp;&nbsp;<span style="color: var(--em-accent-alt);">"match"</span>: <span style="color: var(--em-success);">"Jan de Vries"</span>,<br>
+                                &nbsp;&nbsp;<span style="color: var(--em-accent-alt);">"type"</span>:&nbsp; <span style="color: var(--em-warning);">"NAME"</span>,<br>
+                                &nbsp;&nbsp;<span style="color: var(--em-accent-alt);">"conf"</span>:&nbsp; <span style="color: var(--em-primary);">"high"</span><br>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">WHAT HAPPENED</div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            The AI returns <strong style="color: #e2e8f0;">JSON annotations only</strong> — the matched text, entity type, and confidence level. It never reprints or echoes the input text.
+                        </div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            Responses are keyed by segment hash. The SDK uses its local mapping to route each annotation back to its correct position.
+                        </div>
+                        <div style="font-size: 11px; padding: 8px 12px; background: rgba(123,45,255,0.06); border-radius: 6px; color: var(--em-accent-alt); font-weight: 600;">
+                            <i class="fa-solid fa-reply" style="margin-right: 5px;"></i> 10-20x fewer output tokens than reprinting text
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 6: Reassemble -->
+            <div class="priv-panel" data-panel="6" style="display: none;">
+                <div class="two-column" style="gap: 24px;">
+                    <div class="mock-ui-container" style="height: auto;">
+                        <div class="mock-header" style="height: 30px; min-height: 30px;">
+                            <div class="mock-dot green" style="width: 7px; height: 7px;"></div>
+                            <div style="margin-left: 4px; font-size: 10px; color: var(--em-success); font-weight: 700; letter-spacing: 1px;"><i class="fa-solid fa-puzzle-piece" style="margin-right: 4px;"></i>YOUR INFRASTRUCTURE</div>
+                            <div style="margin-left: auto; font-size: 10px; color: #475569;">Final output</div>
+                        </div>
+                        <div class="mock-body" style="display: block; padding: 16px; font-size: 13px; line-height: 2.2;">
+                            <span style="color: #94a3b8;">Hierbij verwijs ik </span><span style="color: var(--em-success); font-weight: 700;">[NAME_1]</span><span style="color: #94a3b8;"> (BSN: </span><span style="color: var(--em-success); font-weight: 700;">[ID_1]</span><span style="color: #94a3b8;">) naar uw afdeling cardiologie. De patiënt is bereikbaar via </span><span style="color: var(--em-success); font-weight: 700;">[PHONE_1]</span><span style="color: #94a3b8;">. </span><span id="corefTarget" style="color: var(--em-success); font-weight: 700; transition: all 0.6s ease;">[NAME_2]</span><span style="color: #94a3b8;"> heeft ook een wijziging van begunstigde gevraagd.</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; justify-content: center;">
+                        <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted);">RESULT</div>
+                        <div style="font-size: 13px; color: #94a3b8; line-height: 1.7;">
+                            All PII redacted with consistent pseudonyms. "Jan de Vries" → <span style="color: var(--em-success); font-weight: 600;">[NAME_1]</span>, "Jan" → <span style="color: var(--em-success); font-weight: 600;">[NAME_2]</span> — same person, but different pseudonym by default.
+                        </div>
+                        <div id="corefCard" style="padding: 10px 14px; background: rgba(255,176,32,0.06); border: 1px solid rgba(255,176,32,0.15); border-radius: 8px; cursor: pointer; transition: all 0.3s ease;" onclick="triggerCoref()">
+                            <div style="font-size: 12px; font-weight: 700; color: var(--em-warning); margin-bottom: 4px;"><i class="fa-solid fa-link" style="margin-right: 5px;"></i>PRO / ENTERPRISE: Deep Coreference <span style="font-size: 9px; font-weight: 400; opacity: 0.7; margin-left: 6px;">click to activate</span></div>
+                            <div style="font-size: 11px; color: #64748b; line-height: 1.5;">A local model merges NAME_1 + NAME_2 into a single pseudonym. Runs entirely on your infrastructure.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom trust badges -->
+        <div class="trust-row" style="margin-top: 10px;">
+            <div class="trust-badge" style="background: rgba(0,245,160,0.08); border: 1px solid rgba(0,245,160,0.2); color: var(--em-success);">
+                <i class="fa-solid fa-laptop-code"></i> Steps 1–3 &amp; 6 on your infrastructure
+            </div>
+            <div class="trust-badge" style="background: rgba(123,45,255,0.08); border: 1px solid rgba(123,45,255,0.2); color: var(--em-accent-alt);">
+                <i class="fa-solid fa-cloud"></i> Steps 4–5 on EU cloud — shuffled, annotations only
+            </div>
+            <div class="trust-badge" style="background: rgba(0,245,160,0.08); border: 1px solid rgba(0,245,160,0.2); color: var(--em-success);">
+                <i class="fa-solid fa-lock"></i> Structured PII never leaves your device
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Data Privacy</div>
+</div>
+
+<!-- ============================================
+     SLIDE 5: LIVE DEMO — BEFORE / AFTER
+     ============================================ -->
+<div class="slide-container" id="slide-5">
+    <h2 class="slide-title">See It In Action</h2>
+    <div class="content-area">
+        <div class="demo-toggle" id="demoToggle">
+            <button class="demo-toggle-btn active" onclick="switchDemo('before')">Input Document</button>
+            <button class="demo-toggle-btn" onclick="switchDemo('after')">Redacted Output</button>
+        </div>
+        <div class="two-column" style="align-items: stretch;">
+            <div>
+                <div class="demo-panel active" id="demo-before">
+                    <div class="demo-input-area" style="height: 320px;">
+                        <div style="font-size: 10px; color: #475569; margin-bottom: 12px; letter-spacing: 1px;">SAMPLE DOCUMENT — DUTCH MEDICAL REFERRAL</div>
+                        <div style="line-height: 2.2; color: #94a3b8;">
+                            Geachte collega,<br><br>
+                            Hierbij verwijs ik <span class="pii-highlight pii-name">Jan de Vries</span> (BSN: <span class="pii-highlight pii-id">123456789</span>) naar uw afdeling cardiologie. De patiënt, woonachtig op <span class="pii-highlight pii-name">Keizersgracht 42, Amsterdam</span>, is bereikbaar via <span class="pii-highlight pii-phone">+31 6 12345678</span> of <span class="pii-highlight pii-email">j.devries@gmail.com</span>.<br><br>
+                            Gelieve het dossier te sturen naar IBAN <span class="pii-highlight pii-iban">NL91 ABNA 0417 1643 00</span>.
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-panel" id="demo-after">
+                    <div class="demo-output-area" style="height: 320px;">
+                        <div style="font-size: 10px; color: #475569; margin-bottom: 12px; letter-spacing: 1px;">REDACTED OUTPUT — ALL PII REMOVED</div>
+                        <div style="line-height: 2.2; color: #94a3b8;">
+                            Geachte collega,<br><br>
+                            Hierbij verwijs ik <span class="redacted">[PERSON]</span> (BSN: <span class="redacted">[NATIONAL_ID]</span>) naar uw afdeling cardiologie. De patiënt, woonachtig op <span class="redacted">[ADDRESS]</span>, is bereikbaar via <span class="redacted">[PHONE]</span> of <span class="redacted">[EMAIL]</span>.<br><br>
+                            Gelieve het dossier te sturen naar IBAN <span class="redacted">[IBAN]</span>.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--em-text-muted); margin-bottom: 4px;">DETECTED PII ENTITIES</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(123,45,255,0.06); border-radius: 8px; border-left: 3px solid var(--em-accent-alt);">
+                        <i class="fa-solid fa-brain" style="color: var(--em-accent-alt); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-accent-alt); font-weight: 700;">PERSON</span> <span style="font-size: 11px; color: #64748b;">— Jan de Vries</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(123,45,255,0.15); padding: 2px 6px; border-radius: 3px;">CLOUD</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(0,212,255,0.06); border-radius: 8px; border-left: 3px solid var(--em-primary);">
+                        <i class="fa-solid fa-shield-halved" style="color: var(--em-primary); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-primary); font-weight: 700;">BSN</span> <span style="font-size: 11px; color: #64748b;">— 123456789</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(0,212,255,0.15); padding: 2px 6px; border-radius: 3px;">LOCAL</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(123,45,255,0.06); border-radius: 8px; border-left: 3px solid var(--em-accent-alt);">
+                        <i class="fa-solid fa-brain" style="color: var(--em-accent-alt); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-accent-alt); font-weight: 700;">ADDRESS</span> <span style="font-size: 11px; color: #64748b;">— Keizersgracht 42</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(123,45,255,0.15); padding: 2px 6px; border-radius: 3px;">CLOUD</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(0,245,160,0.06); border-radius: 8px; border-left: 3px solid var(--em-success);">
+                        <i class="fa-solid fa-shield-halved" style="color: var(--em-success); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-success); font-weight: 700;">PHONE</span> <span style="font-size: 11px; color: #64748b;">— +31 6 12345678</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(0,245,160,0.15); padding: 2px 6px; border-radius: 3px;">LOCAL</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,176,32,0.06); border-radius: 8px; border-left: 3px solid var(--em-warning);">
+                        <i class="fa-solid fa-shield-halved" style="color: var(--em-warning); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-warning); font-weight: 700;">EMAIL</span> <span style="font-size: 11px; color: #64748b;">— j.devries@gmail.com</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(255,176,32,0.15); padding: 2px 6px; border-radius: 3px;">LOCAL</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: rgba(255,77,109,0.06); border-radius: 8px; border-left: 3px solid var(--em-accent);">
+                        <i class="fa-solid fa-shield-halved" style="color: var(--em-accent); font-size: 12px;"></i>
+                        <div><span style="font-size: 12px; color: var(--em-accent); font-weight: 700;">IBAN</span> <span style="font-size: 11px; color: #64748b;">— NL91 ABNA 0417...</span></div>
+                        <span style="margin-left: auto; font-size: 10px; color: #475569; background: rgba(255,77,109,0.15); padding: 2px 6px; border-radius: 3px;">LOCAL</span>
+                    </div>
+                </div>
+                <div style="font-size: 11px; color: #475569; margin-top: 4px; display: flex; gap: 16px;">
+                    <span><span style="background: rgba(0,245,160,0.15); padding: 1px 5px; border-radius: 3px; color: var(--em-success); font-weight: 700;">LOCAL</span> = caught by rule engine</span>
+                    <span><span style="background: rgba(123,45,255,0.15); padding: 1px 5px; border-radius: 3px; color: var(--em-accent-alt); font-weight: 700;">CLOUD</span> = caught by AI model</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Demo</div>
+</div>
+
+<!-- ============================================
+     SLIDE 6: DEVELOPER EXPERIENCE
+     ============================================ -->
+<div class="slide-container" id="slide-6">
+    <h2 class="slide-title">Integrate in Minutes</h2>
+    <div class="content-area">
+        <div class="two-column" style="gap: 36px;">
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <!-- Python -->
+                <div class="mock-ui-container" style="height: auto;">
+                    <div class="mock-header">
+                        <div class="mock-dot red"></div>
+                        <div class="mock-dot yellow"></div>
+                        <div class="mock-dot green"></div>
+                        <div style="margin-left: auto; font-size: 11px; color: #64748b;">python — app.py</div>
+                    </div>
+                    <div class="mock-body" style="font-size: 12px; line-height: 2.1; gap: 2px; padding: 14px 18px;">
+                        <div class="typing-line" style="color: #7c3aed; animation: typeLine 1.5s steps(30) 0.3s forwards;"><span style="color: #c084fc;">from</span> euromask <span style="color: #c084fc;">import</span> redact</div>
+                        <div style="height: 4px;"></div>
+                        <div class="typing-line" style="color: #64748b; animation: typeLine 1.8s steps(40) 2s forwards;"># Free tier — no API key, fully local, 85% PII reduction</div>
+                        <div class="typing-line" style="animation: typeLine 2s steps(45) 4s forwards;">result = redact(text, country=<span style="color: #a3e635;">"NL"</span>)</div>
+                        <div style="height: 4px;"></div>
+                        <div class="typing-line" style="color: #64748b; animation: typeLine 2.2s steps(50) 6.2s forwards;"># Cloud tier — add one parameter, zero PII leaks</div>
+                        <div class="typing-line" style="animation: typeLine 2s steps(45) 8.5s forwards;">result = redact(text, country=<span style="color: #a3e635;">"NL"</span>, mode=<span style="color: #a3e635;">"cloud"</span>)<span class="typing-cursor" style="animation: blinkCursor 1s step-end 10.5s infinite;"></span></div>
+                    </div>
+                </div>
+                <!-- TypeScript -->
+                <div class="mock-ui-container" style="height: auto;">
+                    <div class="mock-header">
+                        <div class="mock-dot red"></div>
+                        <div class="mock-dot yellow"></div>
+                        <div class="mock-dot green"></div>
+                        <div style="margin-left: auto; font-size: 11px; color: #64748b;">typescript — app.ts</div>
+                    </div>
+                    <div class="mock-body" style="font-size: 12px; line-height: 2.1; padding: 14px 18px;">
+                        <div style="color: #94a3b8;"><span style="color: #c084fc;">import</span> { redact } <span style="color: #c084fc;">from</span> <span style="color: #a3e635;">'@euromask/sdk'</span>;</div>
+                        <div style="color: #94a3b8;"><span style="color: #c084fc;">const</span> result = <span style="color: #c084fc;">await</span> redact(text, { country: <span style="color: #a3e635;">'NL'</span>, mode: <span style="color: #a3e635;">'cloud'</span> });</div>
+                    </div>
+                </div>
+                <!-- bash install -->
+                <div class="mock-ui-container" style="height: auto;">
+                    <div class="mock-header">
+                        <div class="mock-dot red"></div>
+                        <div class="mock-dot yellow"></div>
+                        <div class="mock-dot green"></div>
+                        <div style="margin-left: auto; font-size: 11px; color: #64748b;">terminal</div>
+                    </div>
+                    <div class="mock-body" style="font-size: 12px; line-height: 2.0; padding: 10px 18px;">
+                        <div><span style="color: #a3e635;">$</span> <span style="color: #94a3b8;">pip install euromask</span> <span style="color: #475569;"># zero dependencies, < 5 MB</span></div>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 20px; justify-content: center;">
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(0,245,160,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-bolt" style="color: var(--em-success); font-size: 16px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 16px; color: #f1f5f9; font-weight: 700;">Free: 85% PII Reduction</div>
+                        <div style="font-size: 13px; color: #64748b;">Rule engine catches IDs, IBANs, phones, emails locally. No API key, no cost, < 100ms.</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--em-primary-rgb), 0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-cloud" style="color: var(--em-primary); font-size: 16px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 16px; color: #f1f5f9; font-weight: 700;">Cloud: Zero PII Leaks</div>
+                        <div style="font-size: 13px; color: #64748b;">Add <span style="font-family: 'JetBrains Mono'; font-size: 11px; background: rgba(var(--em-primary-rgb),0.1); padding: 2px 6px; border-radius: 3px;">mode='cloud'</span> — names, addresses, context caught by AI. 98%+ recall.</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(123,45,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-code-branch" style="color: var(--em-accent-alt); font-size: 16px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 16px; color: #f1f5f9; font-weight: 700;">Python + TypeScript</div>
+                        <div style="font-size: 13px; color: #64748b;">Go, C#, Java planned via Rust core. Runs in serverless, containers, browsers.</div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255,176,32,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i class="fa-solid fa-gauge-high" style="color: var(--em-warning); font-size: 16px;"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 16px; color: #f1f5f9; font-weight: 700;">Rules: < 100ms · Cloud: 1–4s</div>
+                        <div style="font-size: 13px; color: #64748b;">Rule engine is instant. Cloud includes network round-trip for maximum accuracy.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Developer Experience</div>
+</div>
+
+<!-- ============================================
+     SLIDE 6: ACCURACY — THE NUMBERS
+     ============================================ -->
+<div class="slide-container" id="slide-7">
+    <h2 class="slide-title">Accuracy That Matters</h2>
+    <div class="content-area">
+        <!-- Top row: two rings with arrow between them -->
+        <div style="display: flex; align-items: center; justify-content: center; gap: 48px; margin-bottom: 28px;">
+            <!-- Rules ring -->
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div class="progress-ring" style="width: 110px; height: 110px;">
+                    <svg width="110" height="110">
+                        <circle class="bg" cx="55" cy="55" r="48"/>
+                        <circle class="progress" cx="55" cy="55" r="48" stroke="var(--em-warning)" style="stroke-dasharray: 301.593; stroke-dashoffset: 301.593; --offset: 75.398;"/>
+                    </svg>
+                    <div class="value" style="font-size: 22px;">75%</div>
+                </div>
+                <div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--em-warning);">Rules Only</div>
+                    <div style="font-size: 12px; color: #64748b;">Free tier — local</div>
+                </div>
+            </div>
+            <!-- Arrow -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-arrow-right" style="font-size: 22px; color: #334155;"></i>
+                <div style="font-size: 10px; color: #475569; font-weight: 600;">+ CLOUD</div>
+            </div>
+            <!-- Cloud ring -->
+            <div style="display: flex; align-items: center; gap: 18px;">
+                <div class="progress-ring" style="width: 110px; height: 110px;">
+                    <svg width="110" height="110">
+                        <circle class="bg" cx="55" cy="55" r="48"/>
+                        <circle class="progress" cx="55" cy="55" r="48" stroke="var(--em-success)" style="stroke-dasharray: 301.593; stroke-dashoffset: 301.593; --offset: 6.032;"/>
+                    </svg>
+                    <div class="value" style="font-size: 22px;">98%</div>
+                </div>
+                <div>
+                    <div style="font-size: 16px; font-weight: 700; color: var(--em-success);">Rules + Cloud</div>
+                    <div style="font-size: 12px; color: #64748b;">Paid tier — AI-powered</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom: two columns -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+            <!-- Left: What Rules catch -->
+            <div style="background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+                <div style="font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--em-warning); margin-bottom: 14px;">WHAT THE RULE ENGINE CATCHES</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> National IDs</div>
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> IBANs</div>
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> Phone numbers</div>
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> Email addresses</div>
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> Dates of birth</div>
+                    <div style="font-size: 12.5px; color: #cbd5e1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-check" style="color: var(--em-warning); font-size: 10px;"></i> Tax / SSN</div>
+                </div>
+                <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #1e293b; font-size: 11.5px; color: #64748b; line-height: 1.5;">
+                    Two-pass: liberal pattern matching → contextual suppression filters (currency, units, reference numbers, formulas). Checksums verified. &lt; 100ms locally.
+                </div>
+            </div>
+
+            <!-- Right: What Cloud adds -->
+            <div style="background: #111827; border: 1px solid #1e293b; border-radius: 12px; padding: 20px;">
+                <div style="font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--em-primary); margin-bottom: 14px;">WHAT THE CLOUD MODEL ADDS</div>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(123,45,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid fa-user" style="color: var(--em-accent-alt); font-size: 13px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: #f1f5f9; font-weight: 700;">Person Names</div>
+                            <div style="font-size: 11.5px; color: #64748b;">Multilingual detection, compound names, prefixes, titles across all EU languages.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(123,45,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid fa-location-dot" style="color: var(--em-accent-alt); font-size: 13px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: #f1f5f9; font-weight: 700;">Free-Text Addresses</div>
+                            <div style="font-size: 11.5px; color: #64748b;">Street addresses in running text, not just structured fields. All EU formats.</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(123,45,255,0.12); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <i class="fa-solid fa-magnifying-glass" style="color: var(--em-accent-alt); font-size: 13px;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: #f1f5f9; font-weight: 700;">Implied Identifiers</div>
+                            <div style="font-size: 11.5px; color: #64748b;">Job titles, medical context, rare combinations that could re-identify individuals.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evaluation framework bar -->
+        <div style="margin-top: 18px; padding: 12px 20px; background: rgba(var(--em-primary-rgb), 0.04); border: 1px solid rgba(var(--em-primary-rgb), 0.1); border-radius: 10px; display: flex; align-items: center; gap: 14px;">
+            <i class="fa-solid fa-flask" style="color: var(--em-primary); font-size: 14px; flex-shrink: 0;"></i>
+            <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">
+                <span style="font-weight: 700; color: #cbd5e1;">Evaluation:</span> Three-layer testing — synthetic (CI/CD gates), semi-realistic (real templates + synthetic PII), real-world (manually annotated). Entity-level recall, not token-level. Published benchmarks.
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Accuracy</div>
+</div>
+
+<!-- ============================================
+     SLIDE 7: VS THE COMPETITION
+     ============================================ -->
+<div class="slide-container" id="slide-8">
+    <h2 class="slide-title">How We Compare</h2>
+    <div class="content-area">
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th style="width: 17%;">Solution</th>
+                    <th style="width: 17%;">Approach</th>
+                    <th style="width: 20%;">Privacy</th>
+                    <th style="width: 20%;">EU PII Accuracy</th>
+                    <th style="width: 13%;">Setup</th>
+                    <th style="width: 13%;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>AWS Comprehend</td>
+                    <td>Cloud API</td>
+                    <td><span style="color: var(--em-accent);">Raw docs → US servers</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;"><div style="flex: 1; height: 4px; background: #1e293b; border-radius: 2px;"><div style="width: 55%; height: 100%; background: var(--em-warning); border-radius: 2px;"></div></div><span style="font-size: 10px; color: var(--em-warning);">~55%</span></div>
+                    </td>
+                    <td>Minutes</td>
+                    <td>Pay-per-use</td>
+                </tr>
+                <tr>
+                    <td>Azure AI</td>
+                    <td>Cloud API</td>
+                    <td><span style="color: var(--em-accent);">Raw docs → cloud</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;"><div style="flex: 1; height: 4px; background: #1e293b; border-radius: 2px;"><div style="width: 60%; height: 100%; background: var(--em-warning); border-radius: 2px;"></div></div><span style="font-size: 10px; color: var(--em-warning);">~60%</span></div>
+                    </td>
+                    <td>Minutes</td>
+                    <td>Pay-per-use</td>
+                </tr>
+                <tr>
+                    <td>Presidio</td>
+                    <td>Open-Source</td>
+                    <td><span style="color: var(--em-success);">Fully local</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;"><div style="flex: 1; height: 4px; background: #1e293b; border-radius: 2px;"><div style="width: 53%; height: 100%; background: var(--em-accent); border-radius: 2px;"></div></div><span style="font-size: 10px; color: var(--em-accent);">~53%</span></div>
+                    </td>
+                    <td>Hours</td>
+                    <td>Free</td>
+                </tr>
+                <tr>
+                    <td>Private AI</td>
+                    <td>On-Prem</td>
+                    <td><span style="color: var(--em-success);">Fully local</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;"><div style="flex: 1; height: 4px; background: #1e293b; border-radius: 2px;"><div style="width: 85%; height: 100%; background: var(--em-primary); border-radius: 2px;"></div></div><span style="font-size: 10px; color: var(--em-primary);">~85%</span></div>
+                    </td>
+                    <td>4–8 Weeks</td>
+                    <td>Enterprise</td>
+                </tr>
+                <tr class="em-highlight">
+                    <td><span style="color: var(--em-primary); font-weight: 800;">EuroMask</span></td>
+                    <td style="color: var(--em-primary);">Hybrid SDK</td>
+                    <td><span style="color: var(--em-success); font-weight: 700;">Structured PII local</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 6px;"><div style="flex: 1; height: 4px; background: #1e293b; border-radius: 2px;"><div style="width: 98%; height: 100%; background: var(--em-success); border-radius: 2px;"></div></div><span style="font-size: 10px; color: var(--em-success); font-weight: 700;">~98%</span></div>
+                    </td>
+                    <td style="color: var(--em-success); font-weight: 700;">Minutes</td>
+                    <td style="color: var(--em-primary);">From €79/mo</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 24px; display: flex; gap: 30px; justify-content: center;">
+            <div style="text-align: center;">
+                <div style="font-family: 'Urbanist'; font-size: 36px; font-weight: 800; color: var(--em-success);">Best-in-class</div>
+                <div style="font-size: 13px; color: #64748b;">EU PII detection accuracy</div>
+            </div>
+            <div style="width: 1px; background: #1e293b;"></div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Urbanist'; font-size: 36px; font-weight: 800; color: var(--em-primary);">Minutes</div>
+                <div style="font-size: 13px; color: #64748b;">not weeks to integrate</div>
+            </div>
+            <div style="width: 1px; background: #1e293b;"></div>
+            <div style="text-align: center;">
+                <div style="font-family: 'Urbanist'; font-size: 36px; font-weight: 800; color: var(--em-accent-alt);">Privacy-first</div>
+                <div style="font-size: 13px; color: #64748b;">by architecture, not by promise</div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Comparison</div>
+</div>
+
+<!-- ============================================
+     SLIDE 8: EU COVERAGE MAP
+     ============================================ -->
+<div class="slide-container" id="slide-9">
+    <h2 class="slide-title">Built for Every EU Country</h2>
+    <div class="content-area">
+        <div class="two-column">
+            <div>
+                <p style="font-size: 16px; color: #94a3b8; margin-bottom: 20px;">Country-specific rule patterns + language-cluster LoRA adapters. The rule engine validates formats per country; the AI model understands per language.</p>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: rgba(0,245,160,0.06); border: 1px solid rgba(0,245,160,0.15);">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--em-success);"></div>
+                        <div style="font-size: 13px;"><span style="color: var(--em-success); font-weight: 700;">Available Now</span> <span style="color: #94a3b8;">Dutch + French — NL, BE, FR, LU</span></div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: rgba(var(--em-primary-rgb),0.06); border: 1px solid rgba(var(--em-primary-rgb),0.15);">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--em-primary);"></div>
+                        <div style="font-size: 13px;"><span style="color: var(--em-primary); font-weight: 700;">Coming Soon</span> <span style="color: #94a3b8;">German · Iberian · Italian</span></div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 8px; background: rgba(255,176,32,0.06); border: 1px solid rgba(255,176,32,0.15);">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--em-warning);"></div>
+                        <div style="font-size: 13px;"><span style="color: var(--em-warning); font-weight: 700;">On Roadmap</span> <span style="color: #94a3b8;">Nordic · Eastern European · Celtic</span></div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 14px; background: #111827; border: 1px solid #1e293b; border-radius: 10px;">
+                    <div style="font-size: 12px; color: #f1f5f9; font-weight: 700; margin-bottom: 6px;">Need a specific country now?</div>
+                    <div style="font-size: 12px; color: #64748b;">The open-source rule engine supports custom patterns. Add your own country rules today, get AI model support as clusters roll out.</div>
+                </div>
+            </div>
+            <div>
+                <div class="country-grid">
+                    <div class="country-cell phase-1"><span class="country-flag">🇳🇱</span><span class="country-code">NL</span><span class="country-phase">Available</span></div>
+                    <div class="country-cell phase-1"><span class="country-flag">🇧🇪</span><span class="country-code">BE</span><span class="country-phase">Available</span></div>
+                    <div class="country-cell phase-1"><span class="country-flag">🇫🇷</span><span class="country-code">FR</span><span class="country-phase">Available</span></div>
+                    <div class="country-cell phase-1"><span class="country-flag">🇱🇺</span><span class="country-code">LU</span><span class="country-phase">Available</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇩🇪</span><span class="country-code">DE</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇦🇹</span><span class="country-code">AT</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇨🇭</span><span class="country-code">CH</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇪🇸</span><span class="country-code">ES</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇵🇹</span><span class="country-code">PT</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-2"><span class="country-flag">🇮🇹</span><span class="country-code">IT</span><span class="country-phase">Soon</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇸🇪</span><span class="country-code">SE</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇩🇰</span><span class="country-code">DK</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇫🇮</span><span class="country-code">FI</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇳🇴</span><span class="country-code">NO</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇵🇱</span><span class="country-code">PL</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇨🇿</span><span class="country-code">CZ</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇷🇴</span><span class="country-code">RO</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-3"><span class="country-flag">🇭🇺</span><span class="country-code">HU</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-4"><span class="country-flag">🇮🇪</span><span class="country-code">IE</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell phase-4"><span class="country-flag">🇬🇧</span><span class="country-code">UK</span><span class="country-phase">Planned</span></div>
+                    <div class="country-cell" style="background: rgba(255,255,255,0.03); border: 1px dashed #334155;"><span class="country-flag" style="opacity: 0.5;">🇪🇺</span><span class="country-code" style="opacity: 0.5;">+7</span><span class="country-phase" style="color: #475569;">More</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Coverage</div>
+</div>
+
+<!-- ============================================
+     SLIDE 9: PRICING
+     ============================================ -->
+<div class="slide-container" id="slide-10">
+    <h2 class="slide-title">Simple, Transparent Pricing</h2>
+    <div class="content-area">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; width: 100%;">
+            <div class="pricing-card">
+                <div class="plan-name" style="color: var(--em-success);">Free</div>
+                <div class="price">€0</div>
+                <div class="price-period">Open-Source · Forever</div>
+                <div class="feature-list">
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Rule engine only</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> IDs, IBANs, phones, emails</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> 100% local processing</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> No API key needed</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> < 100ms per request</div>
+                </div>
+                <div style="margin-top: 14px; padding: 8px; background: rgba(255,176,32,0.08); border-radius: 6px; font-size: 11px; color: var(--em-warning); font-weight: 700;">75–85% recall</div>
+            </div>
+            <div class="pricing-card">
+                <div class="plan-name">Starter</div>
+                <div class="price">€79<span style="font-size: 18px; color: #64748b;">/mo</span></div>
+                <div class="price-period">1M tokens included</div>
+                <div class="feature-list">
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Everything in Free, plus:</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Hosted 32B AI model</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Names + addresses + context</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> €0.10/1K token overage</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Email support</div>
+                </div>
+                <div style="margin-top: 14px; padding: 8px; background: rgba(0,245,160,0.08); border-radius: 6px; font-size: 11px; color: var(--em-success); font-weight: 700;">98–99%+ recall</div>
+            </div>
+            <div class="pricing-card featured">
+                <div class="plan-name">Professional</div>
+                <div class="price">€149<span style="font-size: 18px; color: #64748b;">/mo</span></div>
+                <div class="price-period">2.5M tokens included</div>
+                <div class="feature-list">
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Everything in Starter, plus:</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Priority processing</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> €0.08/1K token overage</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Dedicated support</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Audit logging</div>
+                    <div class="feature-item"><i class="fa-solid fa-check" style="color: var(--em-warning);"></i> <span style="color: var(--em-warning);">Deep referential integrity</span></div>
+                </div>
+                <div style="margin-top: 14px; padding: 8px; background: rgba(0,245,160,0.08); border-radius: 6px; font-size: 11px; color: var(--em-success); font-weight: 700;">98–99%+ recall</div>
+            </div>
+            <div class="pricing-card">
+                <div class="plan-name" style="color: var(--em-accent-alt);">Enterprise</div>
+                <div class="price" style="font-size: 32px;">Custom</div>
+                <div class="price-period">Volume pricing</div>
+                <div class="feature-list">
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Everything in Pro, plus:</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Volume discounts</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> SLA guarantees</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> On-Premise option</div>
+                    <div class="feature-item"><i class="fa-solid fa-check"></i> Custom LoRA adapters</div>
+                    <div class="feature-item"><i class="fa-solid fa-check" style="color: var(--em-warning);"></i> <span style="color: var(--em-warning);">Deep referential integrity</span></div>
+                </div>
+                <div style="margin-top: 14px; padding: 8px; background: rgba(123,45,255,0.08); border-radius: 6px; font-size: 11px; color: var(--em-accent-alt); font-weight: 700;">Talk to us</div>
+            </div>
+        </div>
+        <!-- Deep Referential Integrity callout -->
+        <div style="margin-top: 16px; background: rgba(255,176,32,0.04); border: 1px solid rgba(255,176,32,0.15); border-radius: 10px; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: rgba(255,176,32,0.15); color: var(--em-warning); font-size: 8px; font-weight: 800; padding: 3px 8px; border-radius: 4px; letter-spacing: 1px;">PRO + ENT</div>
+                <div>
+                    <div style="font-size: 13px; font-weight: 700; color: #e2e8f0;"><i class="fa-solid fa-link" style="color: var(--em-warning); margin-right: 6px; font-size: 11px;"></i>Deep Referential Integrity</div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Local coreference model resolves partial references — "Jan de Vries" + "Jan" + "de klant" → NAME_1</div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 11px; color: var(--em-warning); font-weight: 700;">Included in Professional &amp; Enterprise</div>
+                <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Runs locally on your infrastructure — data never leaves</div>
+            </div>
+        </div>
+
+        <div class="trust-row" style="margin-top: 14px;">
+            <div class="trust-badge" style="background: rgba(var(--em-primary-rgb),0.06); border: 1px solid rgba(var(--em-primary-rgb),0.15); color: var(--em-primary); font-size: 12px;">
+                <i class="fa-solid fa-rotate-left"></i> No lock-in · downgrade anytime
+            </div>
+            <div class="trust-badge" style="background: rgba(0,245,160,0.06); border: 1px solid rgba(0,245,160,0.15); color: var(--em-success); font-size: 12px;">
+                <i class="fa-solid fa-credit-card"></i> No credit card for free tier
+            </div>
+            <div class="trust-badge" style="background: rgba(255,176,32,0.06); border: 1px solid rgba(255,176,32,0.15); color: var(--em-warning); font-size: 12px;">
+                <i class="fa-solid fa-file-invoice"></i> EU VAT invoicing included
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Pricing</div>
+</div>
+
+<!-- ============================================
+     SLIDE 10: TRUST & COMPLIANCE
+     ============================================ -->
+<div class="slide-container" id="slide-11">
+    <h2 class="slide-title">Built for Your DPO</h2>
+    <div class="content-area">
+        <div class="three-column" style="gap: 16px;">
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">The rule engine strips all structured PII (IDs, IBANs, phones, emails) before anything leaves your device. The cloud model never sees this data. This is architecture, not policy.</div>
+                <i class="fa-solid fa-lock" style="font-size: 28px; margin-bottom: 12px; color: var(--em-success);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">Privacy by Architecture</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Structured PII is stripped locally before cloud processing. Not a promise — verifiable by design.</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">Enable transparency mode to log exactly which text is sent to the cloud model. Audit every request. Your DPO can verify the privacy claims independently.</div>
+                <i class="fa-solid fa-eye" style="font-size: 28px; margin-bottom: 12px; color: var(--em-primary);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">Full Transparency Mode</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Log every cloud request. See exactly what's sent. Auditable by your compliance team.</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">Inference runs on European cloud infrastructure (Scaleway, Paris data centre). Your pre-processed text stays in the EU. No US data transfers for cloud processing.</div>
+                <i class="fa-solid fa-earth-europe" style="font-size: 28px; margin-bottom: 12px; color: var(--em-accent-alt);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">European Infrastructure</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Hosted in EU data centres. No cross-border data transfers for inference.</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">Three-layer evaluation with published benchmarks. Synthetic, semi-realistic, and real-world documents. Entity-level metrics. Methodology is public and reproducible.</div>
+                <i class="fa-solid fa-chart-column" style="font-size: 28px; margin-bottom: 12px; color: var(--em-warning);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">Published Benchmarks</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Transparent accuracy claims. Public methodology. Reproducible results.</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">When the cloud model is unavailable, the SDK automatically returns rule-engine-only results with a flag. Your application never fails — it gracefully degrades to structured PII detection.</div>
+                <i class="fa-solid fa-arrows-rotate" style="font-size: 28px; margin-bottom: 12px; color: var(--em-success);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">Graceful Degradation</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Cloud down? SDK falls back to rule-engine-only mode automatically.</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left;">
+                <div class="tooltip" style="width: 260px;">For regulated industries that cannot send any data to external infrastructure: the full stack (rules + model) deployed to your own servers. Docker container or pre-configured hardware.</div>
+                <i class="fa-solid fa-server" style="font-size: 28px; margin-bottom: 12px; color: var(--em-accent);"></i>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 6px;">On-Premise Option</div>
+                <div style="font-size: 12px; color: #94a3b8; line-height: 1.5;">Full stack on your infrastructure for maximum data sovereignty.</div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Compliance</div>
+</div>
+
+<!-- ============================================
+     SLIDE 12: USE CASES
+     ============================================ -->
+<div class="slide-container" id="slide-12">
+    <h2 class="slide-title">Use Cases</h2>
+    <div class="content-area">
+        <div class="three-column" style="gap: 16px;">
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(0,212,255,0.2); background: linear-gradient(135deg, rgba(0,212,255,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Clean PII from training data, RAG documents, and fine-tuning datasets before they enter your AI pipeline. Prevent PII leakage in model outputs.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0,212,255,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-robot" style="font-size: 20px; margin: 0; color: var(--em-primary);"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">LLM Pre-Processing</div>
+                <div class="node-subtitle">Clean data for AI pipelines</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(0,245,160,0.2); background: linear-gradient(135deg, rgba(0,245,160,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Automate GDPR compliance for document archives. Process invoices, contracts, medical records, HR files. Bulk redaction with audit trails.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(0,245,160,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-file-shield" style="font-size: 20px; margin: 0; color: var(--em-success);"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">GDPR Compliance</div>
+                <div class="node-subtitle">Automate document redaction</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(123,45,255,0.2); background: linear-gradient(135deg, rgba(123,45,255,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Redact customer support logs, medical records, and legal documents before sharing with third parties, analytics teams, or external auditors.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(123,45,255,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-share-nodes" style="font-size: 20px; margin: 0; color: var(--em-accent-alt);"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">Data Sharing</div>
+                <div class="node-subtitle">Safe third-party handoffs</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(255,176,32,0.2); background: linear-gradient(135deg, rgba(255,176,32,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Strip PII from production datasets to create safe development, testing, and QA environments. Developers work with realistic data without compliance risk.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,176,32,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-flask" style="font-size: 20px; margin: 0; color: var(--em-warning);"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">Test Environments</div>
+                <div class="node-subtitle">Production data → safe dev data</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(255,77,109,0.2); background: linear-gradient(135deg, rgba(255,77,109,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Process DSAR (Data Subject Access Request) responses automatically. Identify and redact third-party PII while preserving the subject's own data.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,77,109,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-user-shield" style="font-size: 20px; margin: 0; color: var(--em-accent);"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">DSAR Responses</div>
+                <div class="node-subtitle">Automated access requests</div>
+            </div>
+            <div class="node-box" style="padding: 22px; text-align: left; border-color: rgba(56,189,248,0.2); background: linear-gradient(135deg, rgba(56,189,248,0.06) 0%, #111827 100%);">
+                <div class="tooltip" style="width: 260px;">Redact PII from call transcripts, chat logs, and email archives. Works with any text output from STT (speech-to-text) or communication platforms.</div>
+                <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56,189,248,0.12); display: flex; align-items: center; justify-content: center; margin-bottom: 14px;">
+                    <i class="fa-solid fa-headset" style="font-size: 20px; margin: 0; color: #38bdf8;"></i>
+                </div>
+                <div class="node-title" style="font-size: 15px; margin-bottom: 4px;">Communication Logs</div>
+                <div class="node-subtitle">Calls, chats, emails</div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">EUROMASK · Use Cases</div>
+</div>
+
+<!-- ============================================
+     SLIDE 12: GET STARTED — CTA
+     ============================================ -->
+<div class="slide-container theme-title" id="slide-13">
+    <div class="title-layout">
+        <div style="font-size: 13px; font-weight: 700; letter-spacing: 3px; color: var(--em-primary); margin-bottom: 20px;">GET STARTED TODAY</div>
+
+        <!-- Two-tier value prop -->
+        <div style="display: flex; gap: 40px; align-items: stretch; justify-content: center; width: 100%;">
+
+            <!-- Tier 1: Free -->
+            <div style="flex: 1; max-width: 480px; background: rgba(0,245,160,0.03); border: 2px solid rgba(0,245,160,0.2); border-radius: 20px; padding: 30px 28px; text-align: center; position: relative;">
+                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--em-secondary); padding: 0 14px;">
+                    <span style="font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--em-success); background: rgba(0,245,160,0.1); padding: 4px 12px; border-radius: 20px;">FREE FOREVER</span>
+                </div>
+                <h1 style="font-size: 36px; margin-bottom: 6px; margin-top: 8px;">Three Lines of Code.</h1>
+                <div style="font-family: 'Urbanist'; font-size: 48px; font-weight: 800; color: var(--em-success); margin: 8px 0;">85% Less PII.</div>
+                <div class="mock-ui-container" style="text-align: left; margin-top: 16px;">
+                    <div class="mock-header" style="height: 30px; min-height: 30px;">
+                        <div class="mock-dot red" style="width: 8px; height: 8px;"></div>
+                        <div class="mock-dot yellow" style="width: 8px; height: 8px;"></div>
+                        <div class="mock-dot green" style="width: 8px; height: 8px;"></div>
+                        <div style="margin-left: auto; font-size: 10px; color: #64748b;">terminal</div>
+                    </div>
+                    <div class="mock-body" style="font-size: 12px; line-height: 2.0; padding: 12px 16px;">
+                        <div style="color: #a3e635;">$ pip install euromask</div>
+                        <div style="color: #94a3b8;">$ python -c "from euromask import redact; print(redact('Jan de Vries, BSN 123456789', country='NL'))"</div>
+                        <div style="color: var(--em-success);">→ Jan de Vries, BSN [NATIONAL_ID]</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 12px;">Open-source rule engine · IDs, IBANs, phones, emails · 27 EU countries</div>
+            </div>
+
+            <!-- Plus sign -->
+            <div style="display: flex; align-items: center; font-size: 36px; color: #334155; font-weight: 800;">+</div>
+
+            <!-- Tier 2: Cloud -->
+            <div style="flex: 1; max-width: 480px; background: rgba(var(--em-primary-rgb),0.03); border: 2px solid rgba(var(--em-primary-rgb),0.25); border-radius: 20px; padding: 30px 28px; text-align: center; position: relative;">
+                <div style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--em-secondary); padding: 0 14px;">
+                    <span style="font-size: 11px; font-weight: 800; letter-spacing: 2px; color: var(--em-primary); background: rgba(var(--em-primary-rgb),0.1); padding: 4px 12px; border-radius: 20px;">FROM €79/MO</span>
+                </div>
+                <h1 style="font-size: 36px; margin-bottom: 6px; margin-top: 8px;">+ Our Cloud.</h1>
+                <div style="font-family: 'Urbanist'; font-size: 48px; font-weight: 800; color: var(--em-primary); margin: 8px 0;">Zero PII Leaks.</div>
+                <div class="mock-ui-container" style="text-align: left; margin-top: 16px;">
+                    <div class="mock-header" style="height: 30px; min-height: 30px;">
+                        <div class="mock-dot red" style="width: 8px; height: 8px;"></div>
+                        <div class="mock-dot yellow" style="width: 8px; height: 8px;"></div>
+                        <div class="mock-dot green" style="width: 8px; height: 8px;"></div>
+                        <div style="margin-left: auto; font-size: 10px; color: #64748b;">terminal</div>
+                    </div>
+                    <div class="mock-body" style="font-size: 12px; line-height: 2.0; padding: 12px 16px;">
+                        <div style="color: #94a3b8;">result = redact(text, country=<span style="color: #a3e635;">'NL'</span>, <span style="color: var(--em-primary); font-weight: 700;">mode='cloud'</span>)</div>
+                        <div style="color: var(--em-primary);">→ [PERSON], BSN [NATIONAL_ID]</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #64748b; margin-top: 12px;">Names, addresses, context · 98%+ recall · One extra parameter</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 28px; font-size: 14px; color: var(--em-text-muted);">
+            <i class="fa-brands fa-github" style="margin-right: 6px;"></i> github.com/euromask
+            <span style="margin: 0 15px; opacity: 0.3;">|</span>
+            <i class="fa-solid fa-book" style="margin-right: 6px;"></i> docs.euromask.eu
+            <span style="margin: 0 15px; opacity: 0.3;">|</span>
+            <i class="fa-solid fa-envelope" style="margin-right: 6px;"></i> hello@euromask.eu
+        </div>
+    </div>
+    <div class="slide-footer">euromask.eu</div>
+</div>
+
+</div><!-- End presentation-wrapper -->
+
+<!-- Navigation Controls -->
+<div class="nav-controls">
+    <button class="nav-btn" id="prevBtn"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="nav-btn" id="nextBtn"><i class="fa-solid fa-chevron-right"></i></button>
+    <button class="nav-btn" id="fullscreenBtn" title="Full Screen"><i class="fa-solid fa-expand"></i></button>
+</div>
+
+<div class="slide-indicator" id="indicator">01 / 12</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 13;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const indicator = document.getElementById('indicator');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const wrapper = document.getElementById('presentation-wrapper');
+
+    function scaleSlides() {
+        const scaleX = window.innerWidth / 1280;
+        const scaleY = window.innerHeight / 720;
+        wrapper.style.transform = `scale(${Math.min(scaleX, scaleY) * 0.95})`;
+    }
+
+    window.addEventListener('resize', scaleSlides);
+    scaleSlides();
+
+    function updateSlides() {
+        document.querySelectorAll('.slide-container').forEach((slide, i) => {
+            slide.classList.toggle('active', i === currentSlide - 1);
+        });
+        indicator.innerText = `${String(currentSlide).padStart(2, '0')} / ${totalSlides}`;
+        prevBtn.style.opacity = currentSlide === 1 ? '0.3' : '1';
+        nextBtn.style.opacity = currentSlide === totalSlides ? '0.3' : '1';
+    }
+
+    prevBtn.addEventListener('click', () => { if (currentSlide > 1) { currentSlide--; updateSlides(); } });
+    nextBtn.addEventListener('click', () => { if (currentSlide < totalSlides) { currentSlide++; updateSlides(); } });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if (currentSlide < totalSlides) { currentSlide++; updateSlides(); } }
+        else if (e.key === 'ArrowLeft') { if (currentSlide > 1) { currentSlide--; updateSlides(); } }
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        else document.exitFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        setTimeout(scaleSlides, 100);
+        const icon = fullscreenBtn.querySelector('i');
+        icon.classList.toggle('fa-expand', !document.fullscreenElement);
+        icon.classList.toggle('fa-compress', !!document.fullscreenElement);
+    });
+
+    updateSlides();
+
+    // Demo toggle (slide 4)
+    // Privacy pipeline step switcher
+    const privStepColors = {
+        1: { bg: 'rgba(0,245,160,0.08)', border: 'rgba(0,245,160,0.4)', color: 'var(--em-success)' },
+        2: { bg: 'rgba(0,245,160,0.08)', border: 'rgba(0,245,160,0.4)', color: 'var(--em-success)' },
+        3: { bg: 'rgba(0,245,160,0.08)', border: 'rgba(0,245,160,0.4)', color: 'var(--em-success)' },
+        4: { bg: 'rgba(123,45,255,0.08)', border: 'rgba(123,45,255,0.4)', color: 'var(--em-accent-alt)' },
+        5: { bg: 'rgba(123,45,255,0.08)', border: 'rgba(123,45,255,0.4)', color: 'var(--em-accent-alt)' },
+        6: { bg: 'rgba(0,245,160,0.08)', border: 'rgba(0,245,160,0.4)', color: 'var(--em-success)' }
+    };
+
+    let corefActive = false;
+
+    function showPrivStep(n) {
+        // Reset coref animation when leaving panel 6
+        if (corefActive) {
+            const t = document.getElementById('corefTarget');
+            if (t) { t.textContent = '[NAME_2]'; t.style.color = 'var(--em-success)'; t.style.textShadow = 'none'; }
+            const card = document.getElementById('corefCard');
+            if (card) { card.style.background = 'rgba(255,176,32,0.06)'; card.style.borderColor = 'rgba(255,176,32,0.15)'; }
+            corefActive = false;
+        }
+        // Update step buttons
+        document.querySelectorAll('.priv-step').forEach(el => {
+            const s = parseInt(el.dataset.step);
+            if (s === n) {
+                const c = privStepColors[s];
+                el.style.background = c.bg;
+                el.style.borderColor = c.border;
+                el.querySelector('i').style.color = c.color;
+                el.querySelector('div').style.color = c.color;
+            } else {
+                el.style.background = 'rgba(255,255,255,0.02)';
+                el.style.borderColor = '#1e293b';
+                el.querySelector('i').style.color = '#64748b';
+                el.querySelector('div').style.color = '#94a3b8';
+            }
+        });
+        // Update panels
+        document.querySelectorAll('.priv-panel').forEach(el => {
+            el.style.display = parseInt(el.dataset.panel) === n ? 'block' : 'none';
+        });
+    }
+
+    function triggerCoref() {
+        if (corefActive) return;
+        corefActive = true;
+        const t = document.getElementById('corefTarget');
+        const card = document.getElementById('corefCard');
+        // Flash + transform NAME_2 → NAME_1
+        t.style.color = 'var(--em-warning)';
+        t.style.textShadow = '0 0 12px rgba(255,176,32,0.6)';
+        card.style.background = 'rgba(255,176,32,0.12)';
+        card.style.borderColor = 'var(--em-warning)';
+        setTimeout(() => { t.textContent = '[NAME_1]'; }, 400);
+        setTimeout(() => { t.style.textShadow = '0 0 6px rgba(255,176,32,0.3)'; }, 1000);
+    }
+    window.triggerCoref = triggerCoref;
+
+    function switchDemo(panel) {
+        document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.demo-toggle-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('demo-' + panel).classList.add('active');
+        event.target.classList.add('active');
+    }
+    window.switchDemo = switchDemo;
+</script>
+
+</body>
+</html>

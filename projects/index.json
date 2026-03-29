@@ -1,0 +1,18 @@
+[
+  {
+    "slug": "euromask",
+    "file": "EuroMask-Pitch-Deck.html",
+    "title": "EuroMask Pitch Deck",
+    "description": "PII redaction that understands Europe — a pitch deck for the EuroMask project.",
+    "tags": ["AI", "privacy", "pitch"],
+    "date": "2026-03-29"
+  },
+  {
+    "slug": "example-presentation",
+    "file": "index.html",
+    "title": "Example Presentation",
+    "description": "A sample project to demonstrate the discovery page.",
+    "tags": ["demo"],
+    "date": "2026-03-29"
+  }
+]

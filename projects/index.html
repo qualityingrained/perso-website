@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects — Joren Janssens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #ad2c00;
+  --primary-container: #d83900;
+  --on-primary: #ffffff;
+  --surface: #fcf9f8;
+  --surface-container-low: #f6f3f2;
+  --surface-container-highest: #e5e2e1;
+  --on-surface: #1c1b1b;
+  --on-surface-variant: #4f4948;
+  --outline-variant: #d8c2be;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--on-surface);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Nav */
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 3rem;
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8125rem;
+  letter-spacing: -0.02em;
+  color: var(--on-surface);
+  text-decoration: none;
+}
+
+.nav-back {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: color 0.2s;
+}
+
+.nav-back:hover { color: var(--primary); }
+
+/* Header */
+.page-header {
+  padding: 4rem 3rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  margin-bottom: 0.75rem;
+}
+
+.page-sub {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--on-surface-variant);
+  max-width: 520px;
+}
+
+/* Project grid */
+.project-grid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 3rem 5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0;
+}
+
+.project-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  text-decoration: none;
+  color: var(--on-surface);
+  outline: 1px solid rgba(216, 194, 190, 0.25);
+  outline-offset: -1px;
+  transition: background 0.2s;
+  min-height: 180px;
+  cursor: pointer;
+}
+
+.project-card:hover {
+  background: var(--surface-container-low);
+}
+
+.project-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.project-title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.project-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.project-arrow {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--primary);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.project-card:hover .project-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.project-share {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--on-surface-variant);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.375rem;
+  opacity: 0;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.project-card:hover .project-share { opacity: 1; }
+.project-share:hover { color: var(--primary); }
+.project-share.copied { color: #4ade80; }
+
+.project-desc {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+  margin-bottom: 1.25rem;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.project-tags {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.project-tag {
+  font-family: var(--font-body);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  outline: 1px solid rgba(173, 44, 0, 0.2);
+  outline-offset: -1px;
+}
+
+.project-date {
+  font-family: var(--font-body);
+  font-size: 0.625rem;
+  color: var(--on-surface-variant);
+  opacity: 0.6;
+}
+
+/* Empty accent cells for grid pattern */
+.project-accent {
+  outline: 1px solid rgba(216, 194, 190, 0.25);
+  outline-offset: -1px;
+  min-height: 180px;
+}
+
+.project-accent.tinted {
+  background: rgba(173, 44, 0, 0.03);
+}
+
+/* Empty state */
+.empty-state {
+  padding: 4rem 3rem;
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 0.875rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Footer */
+footer {
+  background: var(--on-surface);
+  padding: 2.5rem 0;
+}
+
+footer .footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-left {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--surface-container-highest);
+}
+
+.footer-right {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  color: var(--on-surface-variant);
+}
+
+@media (max-width: 768px) {
+  .nav-bar { padding: 1rem 1.5rem; }
+  .page-header { padding: 3rem 1.5rem 2rem; }
+  .project-grid {
+    padding: 0 1.5rem 3rem;
+    grid-template-columns: 1fr;
+  }
+  .project-accent { display: none; }
+  footer .footer-inner {
+    padding: 0 1.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <a href="../" class="nav-logo">JJ</a>
+  <a href="../" class="nav-back">&#8592; Back to main</a>
+</div>
+
+<div class="page-header">
+  <h1 class="page-title">Projects</h1>
+  <p class="page-sub">Presentations, prototypes, and other work — each linked to its own page.</p>
+</div>
+
+<div class="project-grid" id="projectGrid">
+  <!-- Populated by JS from index.json -->
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-left">Joren Janssens</div>
+    <div class="footer-right">2026</div>
+  </div>
+</footer>
+
+<script>
+function shareLink(slug, btn) {
+  var url = window.location.origin + '/view.html?p=' + slug;
+  navigator.clipboard.writeText(url).then(function() {
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(function() {
+      btn.textContent = 'Share';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+fetch('index.json')
+  .then(function(r) { return r.json(); })
+  .then(function(projects) {
+    var grid = document.getElementById('projectGrid');
+
+    if (!projects.length) {
+      grid.innerHTML = '<div class="empty-state">No projects yet.</div>';
+      return;
+    }
+
+    // Sort by date descending
+    projects.sort(function(a, b) {
+      return new Date(b.date) - new Date(a.date);
+    });
+
+    var cells = [];
+
+    projects.forEach(function(p) {
+      var tags = (p.tags || []).map(function(t) {
+        return '<span class="project-tag">' + t + '</span>';
+      }).join('');
+
+      var viewUrl = '../view.html?p=' + p.slug;
+
+      cells.push(
+        '<div class="project-card" onclick="if(event.target.classList.contains(\'project-share\'))return;window.location.href=\'' + viewUrl + '\'">' +
+          '<div>' +
+            '<div class="project-card-top">' +
+              '<div class="project-title">' + p.title + '</div>' +
+              '<div class="project-card-actions">' +
+                '<button class="project-share" onclick="event.stopPropagation();shareLink(\'' + p.slug + '\',this)">Share</button>' +
+                '<div class="project-arrow">&#8599;</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="project-desc">' + (p.description || '') + '</div>' +
+          '</div>' +
+          '<div class="project-meta">' +
+            '<div class="project-tags">' + tags + '</div>' +
+            '<div class="project-date">' + (p.date || '') + '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    });
+
+    // Add accent cells to create grid pattern
+    var total = cells.length;
+    var cols = Math.max(1, Math.floor(grid.offsetWidth / 320));
+    var remainder = total % cols;
+    if (remainder > 0) {
+      for (var i = 0; i < cols - remainder; i++) {
+        cells.push('<div class="project-accent' + (i % 2 === 0 ? ' tinted' : '') + '"></div>');
+      }
+    }
+    // Add one extra accent row
+    for (var j = 0; j < cols; j++) {
+      cells.push('<div class="project-accent' + (j % 2 === 1 ? ' tinted' : '') + '"></div>');
+    }
+
+    grid.innerHTML = cells.join('');
+  })
+  .catch(function() {
+    document.getElementById('projectGrid').innerHTML =
+      '<div class="empty-state">Could not load projects.</div>';
+  });
+</script>
+
+</body>
+</html>
