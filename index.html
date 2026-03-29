@@ -1554,16 +1554,16 @@ footer .section-inner {
               <span class="terminal-title">ai-agent</span>
             </div>
             <div class="terminal-lines">
-              <div class="line"><span class="prompt">$</span> claude --agent review-defects</div>
-              <div class="line"><span class="info">◈ Loading defect corpus (2,847 tickets)...</span></div>
-              <div class="line"><span class="info">◈ Clustering with embedding model...</span></div>
-              <div class="line"><span class="bright">  Found 12 clusters across 3 modules</span></div>
-              <div class="line"><span class="warn">  ⚡</span> Cluster #4: auth-timeout — <span class="bright">38 defects</span></div>
-              <div class="line"><span class="info">  Generating root-cause summary...</span></div>
-              <div class="line"><span class="success">  ✓</span> Report written to /out/analysis.md</div>
-              <div class="line"><span class="success">  ✓</span> Jira tickets auto-linked <span class="info">(12 stories)</span></div>
+              <div class="line"><span class="prompt">$</span> claude --agent predict-impact</div>
+              <div class="line"><span class="info">◈ Loading 127 open defects...</span></div>
+              <div class="line"><span class="info">◈ Embedding test steps for 1,843 test cases...</span></div>
+              <div class="line"><span class="info">◈ Comparing failing steps to unexecuted tests...</span></div>
+              <div class="line"><span class="warn">  ⚡</span> DEF-0412 (login-timeout) — <span class="bright">23 tests at risk</span></div>
+              <div class="line"><span class="warn">  ⚡</span> DEF-0387 (cart-null-ref) — <span class="bright">14 tests at risk</span></div>
+              <div class="line"><span class="success">  ✓</span> Impact matrix exported <span class="info">(127 defects → 89 test groups)</span></div>
+              <div class="line"><span class="success">  ✓</span> Priority queue generated <span class="info">(top 15 flagged)</span></div>
               <div class="line"><br></div>
-              <div class="line"><span class="bright">  Done</span> <span class="info">— 3 actionable recommendations</span><span class="cursor"></span></div>
+              <div class="line"><span class="bright">  Done</span> <span class="info">— 42 tests deprioritized, 15 escalated</span><span class="cursor"></span></div>
             </div>
           </div>
           <div class="exp-card-index">02</div>
@@ -1572,9 +1572,9 @@ footer .section-inner {
           <div class="exp-card-category"><span class="cat-pixel"></span> Early Adoption & Integration</div>
           <div class="exp-card-title">AI Innovation</div>
           <div class="exp-card-section-label">Approach</div>
-          <div class="exp-card-text">Identifying where AI creates real leverage, not hype. Integrating LLMs, code assistants, and intelligent automation into existing workflows to amplify team output without introducing new complexity.</div>
+          <div class="exp-card-text">With 100+ open defects, manual impact assessment is impossible. AI embeddings compare failing test steps against the full unexecuted suite to predict which tests share similar patterns and are likely to fail — before anyone runs them.</div>
           <div class="exp-card-section-label">Impact</div>
-          <div class="exp-card-text">Pioneered AI-assisted test generation and review processes, built evaluation frameworks for LLM-powered tools, and introduced generative AI into documentation and knowledge management workflows across teams.</div>
+          <div class="exp-card-text">Automated defect-to-test impact prediction that surfaces at-risk tests instantly, letting teams prioritize execution, skip redundant runs, and escalate the right issues — turning days of triage into minutes.</div>
         </div>
       </div>
 
@@ -1795,19 +1795,24 @@ function randomizeTerminal(card) {
   var t = title.textContent.trim();
 
   if (t === 'ai-agent') {
-    var tickets = rand(800, 4200);
-    var clusters = rand(4, 14);
-    var modules = rand(2, 5);
-    var topCluster = rand(1, clusters);
-    var topName = pick(['auth-timeout', 'null-ref-cart', 'race-condition', 'stale-cache', 'rate-limiter', 'session-drift']);
-    var defects = rand(12, 64);
-    var stories = rand(4, 18);
-    var recs = rand(2, 7);
-    lines[1].innerHTML = '<span class="info">◈ Loading defect corpus (' + tickets.toLocaleString() + ' tickets)...</span>';
-    lines[3].innerHTML = '<span class="bright">  Found ' + clusters + ' clusters across ' + modules + ' modules</span>';
-    lines[4].innerHTML = '<span class="warn">  ⚡</span> Cluster #' + topCluster + ': ' + topName + ' — <span class="bright">' + defects + ' defects</span>';
-    lines[7].innerHTML = '<span class="success">  ✓</span> Jira tickets auto-linked <span class="info">(' + stories + ' stories)</span>';
-    lines[9].innerHTML = '<span class="bright">  Done</span> <span class="info">— ' + recs + ' actionable recommendations</span><span class="cursor"></span>';
+    var openDefects = rand(80, 180);
+    var totalTests = rand(1200, 2800);
+    var defId1 = 'DEF-0' + rand(100, 499);
+    var defId2 = 'DEF-0' + rand(300, 699);
+    var name1 = pick(['login-timeout', 'session-expired', 'auth-race', 'token-refresh', 'sso-redirect']);
+    var name2 = pick(['cart-null-ref', 'price-mismatch', 'stock-sync', 'coupon-overflow', 'checkout-lock']);
+    var risk1 = rand(8, 35);
+    var risk2 = rand(5, 22);
+    var testGroups = rand(50, 130);
+    var flagged = rand(8, 25);
+    var deprioritized = rand(25, 60);
+    lines[1].innerHTML = '<span class="info">◈ Loading ' + openDefects + ' open defects...</span>';
+    lines[2].innerHTML = '<span class="info">◈ Embedding test steps for ' + totalTests.toLocaleString() + ' test cases...</span>';
+    lines[4].innerHTML = '<span class="warn">  ⚡</span> ' + defId1 + ' (' + name1 + ') — <span class="bright">' + risk1 + ' tests at risk</span>';
+    lines[5].innerHTML = '<span class="warn">  ⚡</span> ' + defId2 + ' (' + name2 + ') — <span class="bright">' + risk2 + ' tests at risk</span>';
+    lines[6].innerHTML = '<span class="success">  ✓</span> Impact matrix exported <span class="info">(' + openDefects + ' defects → ' + testGroups + ' test groups)</span>';
+    lines[7].innerHTML = '<span class="success">  ✓</span> Priority queue generated <span class="info">(top ' + flagged + ' flagged)</span>';
+    lines[9].innerHTML = '<span class="bright">  Done</span> <span class="info">— ' + deprioritized + ' tests deprioritized, ' + flagged + ' escalated</span><span class="cursor"></span>';
   }
 
 }
