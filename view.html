@@ -3,167 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Viewing — Joren Janssens</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-<style>
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-:root {
-  --primary: #ad2c00;
-  --on-surface: #1c1b1b;
-  --on-surface-variant: #4f4948;
-  --surface: #fcf9f8;
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
-}
-
-body {
-  font-family: var(--font-body);
-  background: var(--surface);
-  color: var(--on-surface);
-  -webkit-font-smoothing: antialiased;
-}
-
-.viewer-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 2.5rem;
-  background: rgba(28, 27, 27, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1.25rem;
-}
-
-.viewer-title {
-  font-family: var(--font-display);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: rgba(255,255,255,0.7);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.viewer-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.viewer-btn {
-  font-family: var(--font-body);
-  font-size: 0.625rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.5);
-  text-decoration: none;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0.25rem 0.5rem;
-  transition: color 0.2s;
-}
-
-.viewer-btn:hover { color: rgba(255,255,255,0.9); }
-
-.viewer-btn.copied {
-  color: #4ade80;
-}
-
-.viewer-frame {
-  position: fixed;
-  top: 2.5rem;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border: none;
-  width: 100%;
-  height: calc(100vh - 2.5rem);
-}
-
-.viewer-error {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  color: var(--on-surface-variant);
-}
-</style>
+<title>Redirecting...</title>
 </head>
 <body>
-
-<div class="viewer-bar">
-  <span class="viewer-title" id="viewerTitle">Loading...</span>
-  <div class="viewer-actions">
-    <button class="viewer-btn" id="shareBtn" onclick="copyShareLink()">Copy link</button>
-    <a href="./" class="viewer-btn">Close</a>
-  </div>
-</div>
-
-<div id="viewerContent"></div>
-
 <script>
-function getSlug() {
-  var params = new URLSearchParams(window.location.search);
-  return params.get('p') || '';
-}
-
-function copyShareLink() {
-  var btn = document.getElementById('shareBtn');
-  navigator.clipboard.writeText(window.location.href).then(function() {
-    btn.textContent = 'Copied';
-    btn.classList.add('copied');
-    setTimeout(function() {
-      btn.textContent = 'Copy link';
-      btn.classList.remove('copied');
-    }, 2000);
-  });
-}
-
-var slug = getSlug();
+var params = new URLSearchParams(window.location.search);
+var slug = params.get('p');
 
 if (!slug) {
-  document.getElementById('viewerContent').innerHTML =
-    '<div class="viewer-error">No project specified.</div>';
-  document.getElementById('viewerTitle').textContent = 'Not found';
+  document.title = 'Not found';
+  document.body.textContent = 'No project specified.';
 } else {
   fetch('projects/index.json')
     .then(function(r) { return r.json(); })
     .then(function(projects) {
       var project = projects.find(function(p) { return p.slug === slug; });
       if (!project) {
-        document.getElementById('viewerContent').innerHTML =
-          '<div class="viewer-error">Project not found.</div>';
-        document.getElementById('viewerTitle').textContent = 'Not found';
+        document.title = 'Not found';
+        document.body.textContent = 'Project not found.';
         return;
       }
-
-      document.title = project.title + ' — Joren Janssens';
-      document.getElementById('viewerTitle').textContent = project.title;
-
       var file = project.file || 'index.html';
-      var iframe = document.createElement('iframe');
-      iframe.className = 'viewer-frame';
-      iframe.src = 'projects/' + project.slug + '/' + file;
-      document.getElementById('viewerContent').appendChild(iframe);
+      window.location.replace('projects/' + project.slug + '/' + file);
     })
     .catch(function() {
-      document.getElementById('viewerContent').innerHTML =
-        '<div class="viewer-error">Could not load project.</div>';
+      document.body.textContent = 'Could not load project.';
     });
 }
 </script>
-
 </body>
 </html>
