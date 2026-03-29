@@ -1,6 +1,14 @@
 [
   {
-    "slug": "EuroMask",
+    "id": "9a37a27d",
+    "file": "NotBossy-Pitch-Deck.html",
+    "title": "NotBossy Pitch Deck",
+    "description": "Reminders with personality — a freemium iOS app with an LLM-powered personality layer.",
+    "tags": ["AI", "mobile", "pitch"],
+    "date": "2026-03-29"
+  },
+  {
+    "id": "6bb25512",
     "file": "EuroMask-Pitch-Deck.html",
     "title": "EuroMask Pitch Deck",
     "description": "PII redaction that understands Europe — a pitch deck for the EuroMask project.",
@@ -8,7 +16,7 @@
     "date": "2026-03-29"
   },
   {
-    "slug": "example-presentation",
+    "id": "163466cc",
     "file": "index.html",
     "title": "Example Presentation",
     "description": "A sample project to demonstrate the discovery page.",

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <title>NotBossy — Reminders With Personality</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        p { margin: 0; margin-bottom: 12px; }
+
+        body {
+            background-color: #1c1b1b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #presentation-wrapper {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
+        }
+
+        :root {
+            --nb-primary: #ad2c00;
+            --nb-primary-light: #d83900;
+            --nb-surface: #fcf9f8;
+            --nb-surface-low: #f6f3f2;
+            --nb-surface-high: #e5e2e1;
+            --nb-on-surface: #1c1b1b;
+            --nb-on-surface-variant: #4f4948;
+            --nb-success: #4ade80;
+            --nb-warn: #fbbf24;
+            --nb-blue: #60a5fa;
+        }
+
+        .slide-container {
+            align-items: center;
+            display: none;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+            height: 100%;
+            width: 100%;
+            justify-content: center;
+            overflow: hidden;
+            padding: 60px 80px;
+            position: absolute;
+            top: 0; left: 0;
+            background-color: var(--nb-surface);
+            color: var(--nb-on-surface);
+        }
+
+        .slide-container.dark {
+            background: var(--nb-on-surface);
+            color: var(--nb-surface);
+        }
+
+        .slide-container.orange {
+            background: linear-gradient(135deg, var(--nb-primary), var(--nb-primary-light));
+            color: #fff;
+        }
+
+        .slide-container > * { position: relative; z-index: 2; }
+
+        .slide-container.active { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 64px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            margin: 0;
+        }
+
+        h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+            margin: 0 0 12px 0;
+        }
+
+        .slide-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: var(--nb-on-surface-variant);
+            margin-top: 16px;
+            max-width: 700px;
+            line-height: 1.5;
+        }
+
+        .dark .subtitle { color: rgba(255,255,255,0.5); }
+        .orange .subtitle { color: rgba(255,255,255,0.7); }
+
+        .accent { color: var(--nb-primary); }
+        .dark .accent { color: var(--nb-primary-light); }
+        .orange .accent { color: #fff; }
+
+        .slide-footer {
+            position: absolute;
+            bottom: 16px;
+            left: 80px;
+            font-size: 11px;
+            color: var(--nb-on-surface-variant);
+            letter-spacing: 1px;
+            z-index: 5;
+        }
+
+        .dark .slide-footer { color: rgba(255,255,255,0.2); }
+        .orange .slide-footer { color: rgba(255,255,255,0.3); }
+
+        /* Grid layout helpers */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; width: 100%; align-items: start; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; width: 100%; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; width: 100%; }
+
+        /* Cards */
+        .card {
+            background: var(--nb-surface-low);
+            padding: 28px;
+            animation: fadeIn 0.5s ease-out both;
+        }
+
+        .dark .card { background: rgba(255,255,255,0.04); }
+        .orange .card { background: rgba(255,255,255,0.1); }
+
+        .card-icon {
+            width: 40px; height: 40px;
+            background: rgba(173, 44, 0, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 16px;
+            font-size: 16px;
+            color: var(--nb-primary);
+        }
+
+        .dark .card-icon { background: rgba(216, 57, 0, 0.15); color: var(--nb-primary-light); }
+
+        .card h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.01em;
+        }
+
+        .card p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--nb-on-surface-variant);
+            margin: 0;
+        }
+
+        .dark .card p { color: rgba(255,255,255,0.45); }
+        .orange .card p { color: rgba(255,255,255,0.6); }
+
+        /* Phone mockup */
+        .phone-mock {
+            width: 260px;
+            height: 480px;
+            background: #1c1b1b;
+            padding: 12px;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #141313;
+            overflow: hidden;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .phone-status {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 20px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .notif {
+            background: rgba(255,255,255,0.06);
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            animation: fadeIn 0.4s ease both;
+        }
+
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .notif-app {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--nb-primary-light);
+        }
+
+        .notif-time {
+            font-size: 9px;
+            color: rgba(255,255,255,0.25);
+        }
+
+        .notif-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            line-height: 1.5;
+            color: rgba(255,255,255,0.75);
+        }
+
+        .notif.bossy .notif-text { color: rgba(255,255,255,0.9); }
+
+        .notif.plain {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .notif.plain .notif-text { color: rgba(255,255,255,0.4); }
+
+        /* Metric blocks */
+        .metric {
+            text-align: center;
+            padding: 24px;
+        }
+
+        .metric-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--nb-on-surface-variant);
+        }
+
+        .dark .metric-label { color: rgba(255,255,255,0.4); }
+
+        /* Pricing table */
+        .price-card {
+            padding: 32px;
+            text-align: center;
+            position: relative;
+        }
+
+        .price-card.featured {
+            background: var(--nb-primary);
+            color: #fff;
+        }
+
+        .price-card.featured .price-label { color: rgba(255,255,255,0.6); }
+        .price-card.featured .price-features li { color: rgba(255,255,255,0.7); }
+
+        .price-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .price-amount {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .price-label {
+            font-size: 12px;
+            color: var(--nb-on-surface-variant);
+            margin-bottom: 20px;
+        }
+
+        .price-features {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+        }
+
+        .price-features li {
+            font-size: 13px;
+            padding: 6px 0;
+            color: var(--nb-on-surface-variant);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .price-features li::before {
+            content: '';
+            width: 4px;
+            height: 4px;
+            background: var(--nb-primary);
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .price-card.featured .price-features li::before { background: rgba(255,255,255,0.5); }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            width: 100%;
+        }
+
+        .timeline-item {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            padding: 0 16px;
+        }
+
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--nb-primary);
+            margin: 0 auto 16px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            top: 6px;
+            left: calc(50% + 6px);
+            right: calc(-50% + 6px);
+            height: 1px;
+            background: var(--nb-surface-high);
+        }
+
+        .dark .timeline-line { background: rgba(255,255,255,0.1); }
+
+        .timeline-item:last-child .timeline-line { display: none; }
+
+        .timeline-quarter {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .timeline-desc {
+            font-size: 12px;
+            color: var(--nb-on-surface-variant);
+            line-height: 1.5;
+        }
+
+        .dark .timeline-desc { color: rgba(255,255,255,0.4); }
+
+        /* Nav */
+        .nav-controls { position: fixed; bottom: 25px; right: 25px; display: flex; gap: 8px; z-index: 1000; }
+        .nav-btn {
+            width: 44px; height: 44px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(28,27,27,0.9); color: rgba(255,255,255,0.5);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; backdrop-filter: blur(10px);
+        }
+        .nav-btn:hover { border-color: var(--nb-primary-light); color: var(--nb-primary-light); }
+        .slide-indicator {
+            position: fixed; bottom: 30px; left: 30px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px; color: rgba(255,255,255,0.3); z-index: 1000;
+        }
+
+        /* Checkerboard accent */
+        .checker-accent {
+            position: absolute;
+            display: grid;
+            grid-template-columns: repeat(4, 24px);
+            grid-template-rows: repeat(4, 24px);
+            gap: 4px;
+            opacity: 0.06;
+            z-index: 0;
+        }
+
+        .checker-accent .ck { width: 24px; height: 24px; }
+        .checker-accent .ck.f { background: var(--nb-primary); }
+        .checker-accent .ck.s { background: var(--nb-surface-high); }
+        .dark .checker-accent .ck.f { background: var(--nb-primary-light); }
+        .dark .checker-accent .ck.s { background: rgba(255,255,255,0.2); }
+        .orange .checker-accent .ck.f { background: #fff; }
+        .orange .checker-accent .ck.s { background: rgba(255,255,255,0.15); }
+    </style>
+</head>
+<body>
+
+<div id="presentation-wrapper">
+
+<!-- SLIDE 1: TITLE -->
+<div class="slide-container dark active" id="slide-1">
+    <div class="checker-accent" style="top: 40px; right: 60px;">
+        <div class="ck f"></div><div class="ck"></div><div class="ck s"></div><div class="ck f"></div>
+        <div class="ck"></div><div class="ck f"></div><div class="ck"></div><div class="ck s"></div>
+        <div class="ck s"></div><div class="ck"></div><div class="ck f"></div><div class="ck"></div>
+        <div class="ck f"></div><div class="ck s"></div><div class="ck"></div><div class="ck f"></div>
+    </div>
+    <div class="slide-label" style="color: var(--nb-primary-light);">REMINDERS · WITH PERSONALITY</div>
+    <h1 style="margin-bottom: 16px;"><span class="accent">Not</span>Bossy</h1>
+    <div class="subtitle">The reminder app that knows you forgot. A free standard experience, with an optional LLM-powered personality layer that turns mundane tasks into memorable nudges.</div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 2: PROBLEM -->
+<div class="slide-container" id="slide-2">
+    <div class="checker-accent" style="bottom: 40px; left: 60px;">
+        <div class="ck"></div><div class="ck f"></div><div class="ck"></div><div class="ck s"></div>
+        <div class="ck f"></div><div class="ck"></div><div class="ck s"></div><div class="ck"></div>
+        <div class="ck s"></div><div class="ck"></div><div class="ck f"></div><div class="ck"></div>
+        <div class="ck"></div><div class="ck s"></div><div class="ck"></div><div class="ck f"></div>
+    </div>
+    <div class="slide-label" style="color: var(--nb-primary);">THE PROBLEM</div>
+    <h2>Reminders are easy to ignore</h2>
+    <div class="subtitle" style="margin-bottom: 40px;">We all set reminders. We all ignore them. Generic notifications blend into the noise. There is no emotional weight, no context, no consequence.</div>
+    <div class="grid-3">
+        <div class="card" style="animation-delay: 0.1s;">
+            <div class="metric-value" style="color: var(--nb-primary);">73%</div>
+            <div class="metric-label">of users ignore at least one reminder daily</div>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <div class="metric-value" style="color: var(--nb-primary);">2.4B</div>
+            <div class="metric-label">reminders set per day across all platforms</div>
+        </div>
+        <div class="card" style="animation-delay: 0.3s;">
+            <div class="metric-value" style="color: var(--nb-primary);">0</div>
+            <div class="metric-label">reminder apps that adapt their tone to you</div>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 3: SOLUTION -->
+<div class="slide-container dark" id="slide-3">
+    <div class="slide-label" style="color: var(--nb-primary-light);">THE SOLUTION</div>
+    <h2>Add a personality layer<br>to your reminders</h2>
+    <div class="subtitle" style="margin-bottom: 40px;">NotBossy wraps a lightweight LLM around your task list. Free users get a clean, standard reminder experience. Paying users unlock an AI personality that remembers your habits, adapts its tone, and makes you <em>want</em> to comply.</div>
+    <div class="grid-2" style="max-width: 900px;">
+        <div class="card" style="animation-delay: 0.1s;">
+            <div class="card-icon"><i class="fas fa-bell"></i></div>
+            <h3>Free: Clean & Simple</h3>
+            <p>Standard reminders with smart scheduling, recurring tasks, and a minimal UI. No noise, no ads.</p>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <div class="card-icon"><i class="fas fa-brain"></i></div>
+            <h3>Pro: Bossy Mode</h3>
+            <p>An LLM-powered personality that crafts contextual, emotionally charged reminders based on your history. "Last week you were late clearing the dishes. Make sure it's done before 8pm today."</p>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 4: DEMO -->
+<div class="slide-container dark" id="slide-4">
+    <div class="slide-label" style="color: var(--nb-primary-light);">SEE THE DIFFERENCE</div>
+    <div class="grid-2" style="align-items: center;">
+        <div>
+            <h2 style="margin-bottom: 20px;">Same task.<br>Different <span class="accent">impact</span>.</h2>
+            <div class="subtitle" style="max-width: 400px;">The free tier reminds you. The pro tier <em>motivates</em> you. Context, history, and personality make every notification hit differently.</div>
+        </div>
+        <div class="phone-mock">
+            <div class="phone-screen">
+                <div class="phone-status">
+                    <span>19:42</span>
+                    <span>NotBossy</span>
+                </div>
+                <div class="notif plain" style="animation-delay: 0.2s;">
+                    <div class="notif-header">
+                        <span class="notif-app" style="color: rgba(255,255,255,0.3);">FREE</span>
+                        <span class="notif-time">19:42</span>
+                    </div>
+                    <div class="notif-text">Reminder: Clear the dishes</div>
+                </div>
+                <div class="notif bossy" style="animation-delay: 0.5s;">
+                    <div class="notif-header">
+                        <span class="notif-app">BOSSY MODE</span>
+                        <span class="notif-time">19:42</span>
+                    </div>
+                    <div class="notif-text">Last week you were late clearing the dishes and left them "soaking" for 3 days. You have 18 minutes. Don't make me remind you again.</div>
+                </div>
+                <div class="notif bossy" style="animation-delay: 0.8s; margin-top: 12px;">
+                    <div class="notif-header">
+                        <span class="notif-app">BOSSY MODE</span>
+                        <span class="notif-time">08:15</span>
+                    </div>
+                    <div class="notif-text">Your gym bag has been in the car since Monday. Either go to the gym or admit defeat. Your call.</div>
+                </div>
+                <div class="notif bossy" style="animation-delay: 1.1s;">
+                    <div class="notif-header">
+                        <span class="notif-app">BOSSY MODE</span>
+                        <span class="notif-time">17:30</span>
+                    </div>
+                    <div class="notif-text">You said you'd call your mom "this weekend." It's Sunday 5:30pm. The window is closing.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 5: HOW IT WORKS -->
+<div class="slide-container" id="slide-5">
+    <div class="slide-label" style="color: var(--nb-primary);">HOW IT WORKS</div>
+    <h2 style="margin-bottom: 40px;">Simple for users, smart under the hood</h2>
+    <div class="grid-4">
+        <div class="card" style="animation-delay: 0.1s;">
+            <div class="card-icon"><i class="fas fa-plus"></i></div>
+            <h3>1. Set a task</h3>
+            <p>Add tasks naturally — "dishes by 8pm", "gym Tuesday", "call mom this weekend".</p>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <div class="card-icon"><i class="fas fa-history"></i></div>
+            <h3>2. We learn</h3>
+            <p>The LLM tracks completion patterns, delays, and excuses over time.</p>
+        </div>
+        <div class="card" style="animation-delay: 0.3s;">
+            <div class="card-icon"><i class="fas fa-pen-fancy"></i></div>
+            <h3>3. We craft</h3>
+            <p>Each reminder is generated with context, tone, and just the right amount of guilt.</p>
+        </div>
+        <div class="card" style="animation-delay: 0.4s;">
+            <div class="card-icon"><i class="fas fa-check"></i></div>
+            <h3>4. You comply</h3>
+            <p>Completion rates go up. Procrastination goes down. Everyone's happy.</p>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 6: PERSONALITY MODES -->
+<div class="slide-container orange" id="slide-6">
+    <div class="checker-accent" style="top: 40px; right: 60px;">
+        <div class="ck f"></div><div class="ck"></div><div class="ck s"></div><div class="ck"></div>
+        <div class="ck"></div><div class="ck f"></div><div class="ck"></div><div class="ck s"></div>
+        <div class="ck s"></div><div class="ck"></div><div class="ck"></div><div class="ck f"></div>
+        <div class="ck"></div><div class="ck s"></div><div class="ck f"></div><div class="ck"></div>
+    </div>
+    <div class="slide-label" style="color: rgba(255,255,255,0.6);">PERSONALITY MODES</div>
+    <h2 style="margin-bottom: 16px;">Choose your level of pressure</h2>
+    <div class="subtitle" style="margin-bottom: 40px;">Not everyone responds to the same tone. NotBossy Pro lets users pick a personality — or let the AI adapt automatically.</div>
+    <div class="grid-3" style="max-width: 900px;">
+        <div class="card" style="animation-delay: 0.1s;">
+            <h3 style="color: #fff;">Gentle Nudge</h3>
+            <p>"Hey, just a friendly reminder about those dishes when you get a chance."</p>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <h3 style="color: #fff;">Bossy Partner</h3>
+            <p>"The dishes. Again. You said 8pm. It's 8:12. I'm watching."</p>
+        </div>
+        <div class="card" style="animation-delay: 0.3s;">
+            <h3 style="color: #fff;">Drill Sergeant</h3>
+            <p>"DROP WHAT YOU'RE DOING. DISHES. NOW. YOU'VE HAD 4 HOURS. NO EXCUSES."</p>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 7: BUSINESS MODEL -->
+<div class="slide-container" id="slide-7">
+    <div class="slide-label" style="color: var(--nb-primary);">BUSINESS MODEL</div>
+    <h2 style="margin-bottom: 40px;">Free to use, pay for personality</h2>
+    <div class="grid-3" style="max-width: 960px;">
+        <div class="card price-card" style="animation-delay: 0.1s;">
+            <div class="price-name">Free</div>
+            <div class="price-amount">$0</div>
+            <div class="price-label">forever</div>
+            <ul class="price-features">
+                <li>Unlimited reminders</li>
+                <li>Recurring tasks</li>
+                <li>Smart scheduling</li>
+                <li>Clean, minimal UI</li>
+                <li>No ads, no tracking</li>
+            </ul>
+        </div>
+        <div class="card price-card featured" style="animation-delay: 0.2s;">
+            <div class="price-name">Pro</div>
+            <div class="price-amount">$3</div>
+            <div class="price-label">per month</div>
+            <ul class="price-features">
+                <li>Everything in Free</li>
+                <li>LLM personality layer</li>
+                <li>Context-aware messages</li>
+                <li>Habit tracking & history</li>
+                <li>Custom tone settings</li>
+            </ul>
+        </div>
+        <div class="card price-card" style="animation-delay: 0.3s;">
+            <div class="price-name">Family</div>
+            <div class="price-amount">$5</div>
+            <div class="price-label">per month, up to 5 users</div>
+            <ul class="price-features">
+                <li>Everything in Pro</li>
+                <li>Shared task lists</li>
+                <li>Cross-user nagging</li>
+                <li>"Boss someone else" mode</li>
+                <li>Family leaderboard</li>
+            </ul>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 8: MARKET -->
+<div class="slide-container dark" id="slide-8">
+    <div class="slide-label" style="color: var(--nb-primary-light);">MARKET OPPORTUNITY</div>
+    <h2 style="margin-bottom: 40px;">A proven category,<br>an untapped angle</h2>
+    <div class="grid-3" style="max-width: 900px;">
+        <div class="card" style="animation-delay: 0.1s;">
+            <div class="metric-value" style="color: var(--nb-primary-light);">$4.8B</div>
+            <div class="metric-label" style="color: rgba(255,255,255,0.4);">Global reminder & task app market by 2027</div>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <div class="metric-value" style="color: var(--nb-primary-light);">340M</div>
+            <div class="metric-label" style="color: rgba(255,255,255,0.4);">Monthly active users across top 5 reminder apps</div>
+        </div>
+        <div class="card" style="animation-delay: 0.3s;">
+            <div class="metric-value" style="color: var(--nb-primary-light);">0</div>
+            <div class="metric-label" style="color: rgba(255,255,255,0.4);">Competitors with an LLM personality layer</div>
+        </div>
+    </div>
+    <div class="subtitle" style="text-align: center; margin-top: 30px;">Reminders are a commodity. Personality is the differentiator. NotBossy turns a utility into an experience people talk about.</div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 9: ROADMAP -->
+<div class="slide-container" id="slide-9">
+    <div class="slide-label" style="color: var(--nb-primary);">ROADMAP</div>
+    <h2 style="margin-bottom: 50px;">From MVP to market</h2>
+    <div class="timeline">
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+            <div class="timeline-quarter">Q3 2026</div>
+            <div class="timeline-desc">MVP launch — free tier with basic reminders. iOS & Android.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+            <div class="timeline-quarter">Q4 2026</div>
+            <div class="timeline-desc">Pro tier launch — LLM personality layer, habit tracking, tone selection.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-line"></div>
+            <div class="timeline-quarter">Q1 2027</div>
+            <div class="timeline-desc">Family plan — shared lists, cross-user nagging, leaderboard.</div>
+        </div>
+        <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-quarter">Q2 2027</div>
+            <div class="timeline-desc">API & integrations — calendar sync, smart home, wearables.</div>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 10: TECH -->
+<div class="slide-container dark" id="slide-10">
+    <div class="slide-label" style="color: var(--nb-primary-light);">UNDER THE HOOD</div>
+    <h2 style="margin-bottom: 40px;">Lightweight AI, real impact</h2>
+    <div class="grid-3" style="max-width: 960px;">
+        <div class="card" style="animation-delay: 0.1s;">
+            <div class="card-icon"><i class="fas fa-microchip"></i></div>
+            <h3>Small model, big tone</h3>
+            <p>Fine-tuned small LLM for tone generation. Low latency, low cost per message. No GPT-4 needed for a guilt trip.</p>
+        </div>
+        <div class="card" style="animation-delay: 0.2s;">
+            <div class="card-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>Privacy first</h3>
+            <p>Task data stays on-device. Only anonymized patterns are sent for tone generation. No selling data. Ever.</p>
+        </div>
+        <div class="card" style="animation-delay: 0.3s;">
+            <div class="card-icon"><i class="fas fa-bolt"></i></div>
+            <h3>Edge inference</h3>
+            <p>Personality generation runs on-device where possible, falling back to cloud only for complex context chains.</p>
+        </div>
+    </div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+<!-- SLIDE 11: CTA -->
+<div class="slide-container orange" id="slide-11">
+    <div class="checker-accent" style="bottom: 50px; left: 60px;">
+        <div class="ck f"></div><div class="ck s"></div><div class="ck"></div><div class="ck f"></div>
+        <div class="ck"></div><div class="ck f"></div><div class="ck s"></div><div class="ck"></div>
+        <div class="ck s"></div><div class="ck"></div><div class="ck f"></div><div class="ck s"></div>
+        <div class="ck f"></div><div class="ck"></div><div class="ck"></div><div class="ck f"></div>
+    </div>
+    <div class="checker-accent" style="top: 50px; right: 60px;">
+        <div class="ck"></div><div class="ck f"></div><div class="ck s"></div><div class="ck"></div>
+        <div class="ck s"></div><div class="ck"></div><div class="ck f"></div><div class="ck s"></div>
+        <div class="ck f"></div><div class="ck s"></div><div class="ck"></div><div class="ck f"></div>
+        <div class="ck"></div><div class="ck f"></div><div class="ck"></div><div class="ck s"></div>
+    </div>
+    <div class="slide-label" style="color: rgba(255,255,255,0.5);">LET'S TALK</div>
+    <h1 style="margin-bottom: 20px; color: #fff;">Stop ignoring<br>your reminders.</h1>
+    <div class="subtitle" style="text-align: center; max-width: 600px;">We're raising a pre-seed round to bring NotBossy to market. If you believe people need a little push — let's build it together.</div>
+    <div style="margin-top: 40px; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.8);">joren.janssens@biq.be</div>
+    <div class="slide-footer">NOTBOSSY · PITCH DECK</div>
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav-controls">
+    <button class="nav-btn" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+    <button class="nav-btn" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+    <button class="nav-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
+</div>
+
+<div class="slide-indicator" id="indicator">01 / 11</div>
+
+<script>
+    let currentSlide = 1;
+    const totalSlides = 11;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const indicator = document.getElementById('indicator');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const wrapper = document.getElementById('presentation-wrapper');
+
+    function scaleSlides() {
+        const scaleX = window.innerWidth / 1280;
+        const scaleY = window.innerHeight / 720;
+        wrapper.style.transform = `scale(${Math.min(scaleX, scaleY) * 0.95})`;
+    }
+
+    window.addEventListener('resize', scaleSlides);
+    scaleSlides();
+
+    function updateSlides() {
+        document.querySelectorAll('.slide-container').forEach((slide, i) => {
+            slide.classList.toggle('active', i === currentSlide - 1);
+        });
+        indicator.innerText = `${String(currentSlide).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
+        prevBtn.style.opacity = currentSlide === 1 ? '0.3' : '1';
+        nextBtn.style.opacity = currentSlide === totalSlides ? '0.3' : '1';
+    }
+
+    prevBtn.addEventListener('click', () => { if (currentSlide > 1) { currentSlide--; updateSlides(); } });
+    nextBtn.addEventListener('click', () => { if (currentSlide < totalSlides) { currentSlide++; updateSlides(); } });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); if (currentSlide < totalSlides) { currentSlide++; updateSlides(); } }
+        else if (e.key === 'ArrowLeft') { if (currentSlide > 1) { currentSlide--; updateSlides(); } }
+    });
+
+    fullscreenBtn.addEventListener('click', () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        else document.exitFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        setTimeout(scaleSlides, 100);
+        const icon = fullscreenBtn.querySelector('i');
+        icon.classList.toggle('fa-expand', !document.fullscreenElement);
+        icon.classList.toggle('fa-compress', !!document.fullscreenElement);
+    });
+
+    updateSlides();
+</script>
+
+</body>
+</html>

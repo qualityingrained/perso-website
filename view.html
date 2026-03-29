@@ -8,23 +8,23 @@
 <body>
 <script>
 var params = new URLSearchParams(window.location.search);
-var slug = params.get('p');
+var id = params.get('p');
 
-if (!slug) {
+if (!id) {
   document.title = 'Not found';
   document.body.textContent = 'No project specified.';
 } else {
-  fetch('projects/index.json')
+  fetch('d/19f697798855/index.json')
     .then(function(r) { return r.json(); })
     .then(function(projects) {
-      var project = projects.find(function(p) { return p.slug === slug; });
+      var project = projects.find(function(p) { return p.id === id; });
       if (!project) {
         document.title = 'Not found';
         document.body.textContent = 'Project not found.';
         return;
       }
       var file = project.file || 'index.html';
-      window.location.replace('projects/' + project.slug + '/' + file);
+      window.location.replace('p/' + project.id + '/' + file);
     })
     .catch(function() {
       document.body.textContent = 'Could not load project.';
