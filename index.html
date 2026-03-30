@@ -400,6 +400,7 @@ nav.open .nav-drawer {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
+  align-items: start;
 }
 
 .exp-card {
@@ -413,6 +414,7 @@ nav.open .nav-drawer {
   background: #141313;
   position: relative;
   overflow: hidden;
+  min-height: 280px;
 }
 
 /* Terminal styling */
@@ -881,12 +883,12 @@ nav.open .nav-drawer {
 
 .exp-card-index {
   position: absolute;
-  top: 1rem;
-  right: 1.25rem;
+  bottom: 0.75rem;
+  right: 1rem;
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.15);
   line-height: 1;
   z-index: 2;
 }
